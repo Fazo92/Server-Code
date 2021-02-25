@@ -40,7 +40,7 @@ SOCKET server::createUDPSocket(int portNumber)
 	}
 	else {
 		inet_ntop(AF_INET, &serverHint.sin_addr, host, NI_MAXHOST);
-		std::cout << host << " connected on port " << ntohs(serverHint.sin_port) <<std::endl;
+		std::cout << host << " connected on port " << ntohs(serverHint.sin_port) << std::endl;
 	}
 	//else {
 	//	cout << "Erfolgreich Verbunden UDP" << endl;
@@ -71,18 +71,21 @@ SOCKET server::createSocket(int port) {
 
 	//Bind the op adress and port to a socket
 	sockaddr_in hint;
+	//hint.sin_addr.s_addr = inet_addr("127.0.0.1");
 	hint.sin_family = AF_INET;
 	hint.sin_port = htons(port);
 	hint.sin_addr.S_un.S_addr = INADDR_ANY;
-	::bind(listening, (sockaddr*)&hint, sizeof(hint));
-	listen(listening, SOMAXCONN);
 
+	bind(listening, (sockaddr*)&hint, sizeof(hint));
+	listen(listening, SOMAXCONN);
 
 	//Wait for a connection
 	sockaddr_in client;
 	int clientSize = sizeof(client);
 
 	SOCKET clientSocket = accept(listening, (sockaddr*)&client, &clientSize);
+
+	//SOCKET clientSocket = accept(listening, NULL, NULL);
 
 	char host[NI_MAXHOST];
 	char service[NI_MAXHOST];
@@ -98,7 +101,6 @@ SOCKET server::createSocket(int port) {
 		inet_ntop(AF_INET, &client.sin_addr, host, NI_MAXHOST);
 		std::cout << host << " connected on port " << ntohs(client.sin_port) << std::endl;
 	}
-
 	closesocket(listening);
 	return clientSocket;
 }

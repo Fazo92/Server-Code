@@ -1,0 +1,180 @@
+﻿  stitching.cpp
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(36,41): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(22,41): warning C4101: 'client4': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(22,32): warning C4101: 'client3': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(22,23): warning C4101: 'client2': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(109,41): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(94,12): warning C4101: 'p': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(101,6): warning C4101: 'dscSize': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(258,12): warning C4101: 'p': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(257,8): warning C4101: 'buffer': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(271,6): warning C4101: 'dscSize': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(621,16): warning C4215: nonstandard extension used: long float
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(599,6): warning C4101: 'dscSize': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(841,12): warning C4101: 'p': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(840,8): warning C4101: 'buffer': unreferenced local variable
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(912,41): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(979,15): warning C4215: nonstandard extension used: long float
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1005,25): warning C4244: '=': conversion from 'Float64' to 'float', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1014,15): warning C4215: nonstandard extension used: long float
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1020,66): warning C4244: '=': conversion from 'Float64' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=float
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1093,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1108,48): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1112,54): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1115,55): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1118,56): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1121,56): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1132,48): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1136,54): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1139,55): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1143,56): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1146,56): warning C4805: '==': unsafe mix of type 'double' and type 'bool' in operation
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1177,39): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1263,20): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1284,109): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=int
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1284,84): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=int
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1284,59): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=int
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1307,96): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1308,96): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1309,96): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1326,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1327,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1328,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1345,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1346,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1347,92): warning C4244: '=': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1442,24): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1441,24): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1440,41): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=uchar
+          ]
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(1909,19): warning C4244: '=': conversion from 'double' to 'int', possible loss of data
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(19): warning C6262: Function uses '921828' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(49): warning C6385: Reading invalid data from 'buf':  the readable size is '_Old_11`imgSize' bytes, but '3' bytes may be read.: Lines: 20, 22, 23, 27, 28, 29, 30, 32, 34, 35, 36, 37, 39, 42, 46, 47, 48, 49
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(128): warning C6246: Local declaration of 'p' hides declaration of the same name in outer scope. For additional information, see previous declaration at line '94' of 'c:\users\ita\source\repos\masterarbeit_fmoshref\masterarbeit_fmoshref\stitching.cpp'.: Lines: 94
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(75): warning C6262: Function uses '5116352' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(152): warning C6269: Possibly incorrect order of operations:  dereference ignored.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(274): warning C6246: Local declaration of 'veckp' hides declaration of the same name in outer scope. For additional information, see previous declaration at line '252' of 'c:\users\ita\source\repos\masterarbeit_fmoshref\masterarbeit_fmoshref\stitching.cpp'.: Lines: 252
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(278): warning C6246: Local declaration of 'p' hides declaration of the same name in outer scope. For additional information, see previous declaration at line '258' of 'c:\users\ita\source\repos\masterarbeit_fmoshref\masterarbeit_fmoshref\stitching.cpp'.: Lines: 258
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(247): warning C6262: Function uses '4194800' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(304): warning C6269: Possibly incorrect order of operations:  dereference ignored.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(562): warning C6262: Function uses '2097428' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(609): warning C6001: Using uninitialized memory 'clientSocket2'.: Lines: 564, 565, 567, 568, 571, 575, 579, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 604, 605, 607, 609
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(710): warning C6262: Function uses '2097384' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(846): warning C6246: Local declaration of 'veckp' hides declaration of the same name in outer scope. For additional information, see previous declaration at line '835' of 'c:\users\ita\source\repos\masterarbeit_fmoshref\masterarbeit_fmoshref\stitching.cpp'.: Lines: 835
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(852): warning C6246: Local declaration of 'p' hides declaration of the same name in outer scope. For additional information, see previous declaration at line '841' of 'c:\users\ita\source\repos\masterarbeit_fmoshref\masterarbeit_fmoshref\stitching.cpp'.: Lines: 841
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(831): warning C6262: Function uses '2097432' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(896): warning C6262: Function uses '921860' bytes of stack:  exceeds /analyze:stacksize '10000'.  Consider moving some data to heap.
+C:\Users\ITA\source\repos\MasterArbeit_FMoshref\MasterArbeit_FMoshref\stitching.cpp(920): warning C6385: Reading invalid data from 'buf':  the readable size is '_Old_21`imgSize' bytes, but '3' bytes may be read.: Lines: 897, 898, 899, 900, 901, 902, 903, 908, 910, 911, 912, 913, 915, 917, 918, 919, 920
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(558): message : while compiling class template member function 'cv::Matx<float,3,1>::Matx(_Tp,_Tp,_Tp)'
+          with
+          [
+              _Tp=float
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6201: Index '3' is out of valid index range '0' to '2' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(558): message : while compiling class template member function 'cv::Matx<double,3,1>::Matx(_Tp,_Tp,_Tp)'
+          with
+          [
+              _Tp=double
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6201: Index '3' is out of valid index range '0' to '2' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(558): message : while compiling class template member function 'cv::Matx<_Tp,3,1>::Matx(_Tp,_Tp,_Tp)'
+          with
+          [
+              _Tp=uchar
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(561): warning C6201: Index '3' is out of valid index range '0' to '2' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(553): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(550): message : while compiling class template member function 'cv::Matx<float,2,1>::Matx(_Tp,_Tp)'
+          with
+          [
+              _Tp=float
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(553): warning C6201: Index '2' is out of valid index range '0' to '1' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(553): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(550): message : while compiling class template member function 'cv::Matx<double,2,1>::Matx(_Tp,_Tp)'
+          with
+          [
+              _Tp=double
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(553): warning C6201: Index '2' is out of valid index range '0' to '1' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(569): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(566): message : while compiling class template member function 'cv::Matx<float,4,1>::Matx(_Tp,_Tp,_Tp,_Tp)'
+          with
+          [
+              _Tp=float
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(569): warning C6201: Index '4' is out of valid index range '0' to '3' for possibly stack allocated buffer 'this->val'.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(569): warning C6294: Ill-defined for-loop:  initial condition does not satisfy test.  Loop body not executed.
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(566): message : while compiling class template member function 'cv::Matx<double,4,1>::Matx(_Tp,_Tp,_Tp,_Tp)'
+          with
+          [
+              _Tp=double
+          ]
+C:\src\vcpkg\installed\x64-windows\include\opencv2\core\matx.hpp(569): warning C6201: Index '4' is out of valid index range '0' to '3' for possibly stack allocated buffer 'this->val'.
+  MasterArbeit_FMoshref.vcxproj -> C:\Users\ITA\source\repos\MasterArbeit_FMoshref\x64\Debug\MasterArbeit_FMoshref.exe

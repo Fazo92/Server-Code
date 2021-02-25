@@ -19,11 +19,11 @@ Stitching::Stitching() {
 void Stitching::serialUDP(int port1, int port2, int port3, int port4) {
 	SOCKET clientsocket1 = this->serv.createUDPSocket(port1);
 
-	sockaddr_in client1,client2,client3,client4;
+	sockaddr_in client1, client2, client3, client4;
 	int clientLength1 = sizeof(client1);
 
 
-	
+
 	int height = 480;
 	int width = 640;
 	int bytes = 0;
@@ -33,16 +33,16 @@ void Stitching::serialUDP(int port1, int port2, int port3, int port4) {
 	{
 		Mat img = Mat::zeros(height, width, CV_8UC3);
 		int imgSize;
-		imgSize = img.total()*img.elemSize();
-		ZeroMemory(&client1, clientLength1); 
-		
+		imgSize = img.total() * img.elemSize();
+		ZeroMemory(&client1, clientLength1);
+
 		ZeroMemory(buf, imgSize);
 		//Wait for client to send data
 
 		for (int i = 0; i < imgSize; i += bytes)
 			if ((bytes = recv(clientsocket1, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
 		//buf[bytes] = '\n';
-		
+
 		int ptr = 0;
 		for (int i = 0; i < img.rows; i++) {
 			for (int j = 0; j < img.cols; j++) {
@@ -77,7 +77,7 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 	SOCKET clientsocket1 = this->serv.createSocket(port1);
 	SOCKET clientsocket2 = this->serv.createSocket(port2);
 	SOCKET clientsocket3 = this->serv.createSocket(port3);
-	SOCKET clientsocket4= this->serv.createSocket(port4);
+	SOCKET clientsocket4 = this->serv.createSocket(port4);
 
 
 	int height = 480;
@@ -91,7 +91,7 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 	KeyPoint kp;
 
 	char bufkp[1024 * 1024 * 2];
-	KeyPoint *p;
+	KeyPoint* p;
 
 	int buffsize = 1024 * 1024 * 2;
 	setsockopt(clientsocket3, SOL_SOCKET, SO_RCVBUF, (char*)&buffsize, sizeof(buffsize));
@@ -106,7 +106,7 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 		if (this->features == true) continue;
 		Mat img = Mat::zeros(height, width, CV_8UC3);
 		int imgSize;
-		imgSize = img.total()*img.elemSize();
+		imgSize = img.total() * img.elemSize();
 		ZeroMemory(buf, imgSize);
 		//Wait for client to send data
 		for (int i = 0; i < imgSize; i += bytes)
@@ -125,7 +125,7 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 		ZeroMemory(bufkp, sizeof(bufkp));
 		//for (int i = 0; i < len; i += bytes)
 		if ((bytes1 = recv(clientsocket2, bufkp, sizeof(bufkp), 0)) == -1) cout << ("recv3 failed");
-		KeyPoint *p;
+		KeyPoint* p;
 
 		for (p = (KeyPoint*)&bufkp[0]; p <= (KeyPoint*)&bufkp[bytes1 - 1]; p++) {
 			veckp.push_back(*p);
@@ -143,8 +143,8 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 
 		if ((bytes4 = recv(clientsocket4, (char*)&bufcol, sizeof(bufcol), 0)) == -1) cout << ("recv failed dsc");
 
-		if ((bytes3 = recv(clientsocket3, bufdsc, bufcol*bufrow * 4, 0)) == -1) cout << ("recv failed");
-		float *pdsc = (float*)bufdsc;
+		if ((bytes3 = recv(clientsocket3, bufdsc, bufcol * bufrow * 4, 0)) == -1) cout << ("recv failed");
+		float* pdsc = (float*)bufdsc;
 		dsc = Mat::zeros(bufrow, bufcol, CV_32FC1);
 		for (int i = 0; i < bufrow; i++) {
 			for (int j = 0; j < bufcol; j++) {
@@ -153,15 +153,15 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 			}
 		}
 		pdsc = nullptr;
-		if (bytes == SOCKET_ERROR|| bytes1 == SOCKET_ERROR|| bytes2 == SOCKET_ERROR|| bytes3 == SOCKET_ERROR)
+		if (bytes == SOCKET_ERROR || bytes1 == SOCKET_ERROR || bytes2 == SOCKET_ERROR || bytes3 == SOCKET_ERROR)
 		{
 			cerr << "Error in recv().Quitting" << endl;
 			break;
 		}
-		if (bytes == 0|| bytes1 == 0|| bytes3 == 0 || bytes4 == 0)
+		if (bytes == 0 || bytes1 == 0 || bytes3 == 0 || bytes4 == 0)
 		{
 			cout << "Client disconnected" << endl;
-			cout << "bytes: "<<bytes << endl;
+			cout << "bytes: " << bytes << endl;
 			cout << "bytes1: " << bytes1 << endl;
 			cout << "bytes3: " << bytes3 << endl;
 			cout << "bytes4: " << bytes4 << endl;
@@ -201,20 +201,20 @@ void Stitching::CamFeatures() {
 	VideoCapture cap;
 	// open the default camera, use something different from 0 otherwise;
 	// Check VideoCapture documentation.
-	Mat imgGray1,dsccpuc;
+	Mat imgGray1, dsccpuc;
 	//cuda::SURF_CUDA surf;
 	//cuda::GpuMat img1, kpGPU, dscGPU;
 	Ptr<SURF> detector = SURF::create(400);
 	vector<KeyPoint> kp;
 	Mat dsc;
-	Mat outK, out,tmp;
+	Mat outK, out, tmp;
 	if (!cap.open(0))
 		cout << "can't open Webcam" << endl;
 	for (;;)
 	{
 		cap >> tmp;
 		resize(tmp, tmp, Size(640, 480));
-		this->camFrame=tmp;
+		this->camFrame = tmp;
 
 		detector->detectAndCompute(tmp, noArray(), kp, dsc);
 
@@ -255,7 +255,7 @@ void Stitching::getFeatures(int port1, int port2, int port3) {
 	char buf[1024 * 1024 * 2];
 	//KeyPoint buffer[3000];
 	float buffer;
-	KeyPoint *p;
+	KeyPoint* p;
 	Mat imgK;
 	int bytes1 = 0;
 	int bytes2 = 0;
@@ -275,7 +275,7 @@ void Stitching::getFeatures(int port1, int port2, int port3) {
 
 		ZeroMemory(buf, sizeof(buf));
 		if ((bytes = recv(clientSocket1, buf, sizeof(buf), 0)) == -1) cout << ("recv3 failed");
-		KeyPoint *p;
+		KeyPoint* p;
 		for (p = (KeyPoint*)&buf[0]; p <= (KeyPoint*)&buf[bytes - 1]; p++) {
 			veckp.push_back(*p);
 		}
@@ -292,9 +292,9 @@ void Stitching::getFeatures(int port1, int port2, int port3) {
 		if ((bytes3 = recv(clientSocket3, (char*)&bufcol, sizeof(bufcol), 0)) == -1) cout << ("recv failed dsc");
 
 
-		if ((bytes1 = recv(clientSocket2, bufdsc, bufcol*bufrow * 4, 0)) == -1) cout << ("recv failed");
+		if ((bytes1 = recv(clientSocket2, bufdsc, bufcol * bufrow * 4, 0)) == -1) cout << ("recv failed");
 
-		float *pd = (float*)bufdsc;
+		float* pd = (float*)bufdsc;
 		dsc = Mat::zeros(bufrow, bufcol, CV_32FC1);
 		int ptr = 0;
 
@@ -337,88 +337,220 @@ void Stitching::getFeatures(int port1, int port2, int port3) {
 	WSACleanup();
 }
 
+void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2,int &a,Mat img,Mat &warpImg) {
+	Stitching s;
+	int tmp = a;
+	cuda::GpuMat dsc1GPU, dsc2GPU;
+	dsc1GPU.upload(dsc1);
+	dsc2GPU.upload(dsc2);
+	Ptr<cuda::DescriptorMatcher> matcherGPU;
+	matcherGPU = cuda::DescriptorMatcher::createBFMatcher(NORM_L2);
+	Ptr<cv::DescriptorMatcher> matcher;
+	vector<vector<DMatch>> matches;
+	matcher = BFMatcher::create(NORM_L2, false);
+	matcherGPU->knnMatch(dsc1GPU, dsc2GPU, matches, 2);
+
+	vector<DMatch> mt1;
+	//matcher->knnMatch(dsc1, dsc2, matches, 2);
+
+	if (!matches.empty()) {
+		for (int i = 0; i < matches.size(); i++) {
+			if (matches[i][0].distance < 1. * matches[i][1].distance) {
+				mt1.push_back(matches[i][0]);
+			}
+		}
+	}
+	else {
+		cout << "matches are empty" << endl;
+	}
+
+
+	//cout << "mt1 Size: " << mt1.size() << "mt2 Size: " << mt2.size() << "mt1 Size: " << mt2.size() << endl;
+	Mat H;
+	if (mt1.size()<10) {
+		cout << "Matches size in thread " << tmp << " is too less" << endl;
+		a = 0;
+	}
+	else {
+		H = s.getHomography(mt1, kp2, kp1);
+	}
+
+	mt1.clear();
+
+	if (H.empty()) { 
+		cout << "Homopgrahy in thread " << tmp << "is empty" << endl;
+		a = 0; 
+	} 
+	else  {
+		Mat Template = Mat::zeros(Size(img.size() * 2), img.type());
+
+		Mat roi(Template, Rect(img.cols / 2, img.rows / 2, img.cols, img.rows));
+		img.copyTo(roi);
+		cuda::GpuMat TemplateGPU, warpImgGPU, HGPU;
+		TemplateGPU.upload(Template);
+		//warpImgGPU.upload(warpImg);
+		//warpPerspective(Template, warpImg, H, Size(Template.size()), INTER_CUBIC);
+		cuda::warpPerspective(TemplateGPU, warpImgGPU, H, Size(TemplateGPU.size()), INTER_CUBIC);
+		warpImgGPU.download(warpImg);
+
+	}
+	
+
+}
 
 void Stitching::realTimeStitching()
 {
 
-	Mat matchesimg1,dscC1;
-	//Mat dscCenter, dscRight;
-	vector<KeyPoint> kpCenter, kpLeft;
+	vector<KeyPoint> kpRight, kpLeft,kpCenter,kpBottom;
 	std::this_thread::sleep_for(2s);
-	cuda::GpuMat dscC, dscR;
-	Mat dscCCPU, dscLCPU;
-
+	Mat dscR, dscL,dscC,dscB;
+	
 
 	while (true) {
-		if (this->m_kpC.empty() || this->kptmp.empty()|| this->dscCenter.empty()|| this->dsctmp.empty()) {
+		if (this->m_kpR.empty() || this->m_kpL.empty() || this->dscLeft.empty() || this->dscRight.empty()||this->dscCenter.empty()||this->m_kpC.empty() || this->dscBottom.empty() || this->m_kpB1.empty()) {
 			continue;
 		}
-		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
 		//if (this->rs == false || this->features == false) continue;
 		kpCenter.clear();
 		kpLeft.clear();
-		dscCCPU.release();
-		dscLCPU.release();
-		vector<DMatch> mt1;
-		Mat L = this->img.clone();
+		dscR.release();
+		dscL.release();
+		dscC.release();
+		kpRight.clear();
+		kpBottom.clear();
+		dscB.release();
+		vector<DMatch> mt1,mt2,mt3;
+		Mat L = this->imgLeft.clone();
+		Mat R = this->imgRight.clone();
 		Mat C = this->imgCenter.clone();
+		Mat B = this->imgBottom1.clone();
+		kpRight = this->m_kpR;
+		kpLeft = this->m_kpL;
+		dscL = this->dscLeft;
+		dscR = this->dscRight;
+		dscB = this->dscBottom;
+		dscC = this->dscCenter;
 		kpCenter = this->m_kpC;
-		kpLeft = this->kptmp;
-		dscCCPU = this->dscCenter;
-		dscLCPU = this->dsctmp;
+		kpBottom = this->m_kpB1;
 		//this->rs = false;
 		//this->features = false;
-		//cout << "RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscCCPU.rows << endl;
-		if (kpLeft.size() != dscLCPU.rows || kpCenter.size() != dscCCPU.rows) {
-			cout <<"RealTime "<< "kpLeft.size(): " << kpLeft.size() << "= ?" << " dscLCPU.rows: " << dscLCPU.rows << endl;
-			cout <<"RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscCCPU.rows << endl;
+		//cout << "RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscCenter.rows << endl;
+		//cout << "RealTime " << "kpRight.size(): " << kpRight.size() << "= ?" << " dscRight.rows: " << dscRight.rows << endl;
+		//cout << "RealTime " << "kpLeft.size(): " << kpLeft.size() << "= ?" << " dscLeft.rows: " << dscLeft.rows << endl;
+
+		if (kpLeft.size() != dscL.rows || kpRight.size() != dscR.rows || kpCenter.size() != dscC.rows || kpBottom.size() != dscB.rows) {
+			cout << "RealTime " << "kpLeft.size(): " << kpLeft.size() << "= ?" << " dscLCPU.rows: " << dscLeft.rows << endl;
+			cout << "RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscRight.rows << endl;
 			continue;
 		}
 
 
-		//Ptr<cv::cuda::DescriptorMatcher> matcher11;
-		Ptr<cv::DescriptorMatcher> matcher11;
-		vector<vector<DMatch>> matchesknn;
-		matcher11 = BFMatcher::create(NORM_L2, false);
-		matcher11->knnMatch(dscCCPU, dscLCPU, matchesknn,2);
-		if (!matchesknn.empty()) {
-			for (int i = 0; i < matchesknn.size(); i++) {
-				if (matchesknn[i][0].distance < .75 * matchesknn[i][1].distance) {
-					mt1.push_back(matchesknn[i][0]);
-				}
-			}
-		}
-		else {
-			continue;
-		}
-		vector<Point2f> obj, scene;
-		for (int i = 0; i < mt1.size(); i++) {
-			if ((mt1[i].queryIdx < kpCenter.size()) && (mt1[i].trainIdx < kpLeft.size())) {
-				obj.push_back(kpCenter[mt1[i].queryIdx].pt);
-				scene.push_back(kpLeft[mt1[i].trainIdx].pt);
-			}
-			//cout << "obj: " << obj[i] << endl;
-			//cout << "scene: " << scene[i] << endl;
-		}
+		////Ptr<cv::cuda::DescriptorMatcher> matcher11;
+		//Ptr<cv::DescriptorMatcher> matcher, matcher2,matcher3;
+		//vector<vector<DMatch>> matchesCL,matchesCR,matchesCB;
+		//matcher = BFMatcher::create(NORM_L2, false);
+		//matcher2 = BFMatcher::create(NORM_L2, false);
+		//matcher3 = BFMatcher::create(NORM_L2, false);
 
+		//matcher->knnMatch(dscCenter, dscLeft, matchesCL, 2);
+		//matcher2->knnMatch(dscCenter, dscRight, matchesCR, 2);
+		//matcher3->knnMatch(dscCenter, dscBottom, matchesCB, 2);
 
-		if (obj.empty() || scene.empty()) continue;
-		Mat H = findHomography(scene, obj, RANSAC);
-		if (H.empty()) continue;
-		Mat wLeft;
-		Mat centerTemplate = Mat::zeros(Size(C.size() * 2), C.type());
-		Mat roi(centerTemplate, Rect(C.cols / 2, C.rows / 2, C.cols, C.rows));
-		C.copyTo(roi);
-		warpPerspective(L, wLeft, H, Size(C.size()*2), INTER_CUBIC);
-	
-			Mat fstPano = AlphaBlending(centerTemplate, wLeft);
-			//namedWindow("fstPano", WINDOW_FREERATIO);
-			imshow("fstPano", fstPano);
-			//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-			//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-			//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << "[ns]" << std::endl;
-			if (waitKey(1000) == 27) break;
+		//if (!matchesCL.empty()) {
+		//	for (int i = 0; i < matchesCL.size(); i++) {
+		//		if (matchesCL[i][0].distance < .95 * matchesCL[i][1].distance) {
+		//			mt1.push_back(matchesCL[i][0]);
+		//		}
+		//	}
+		//}
+		//else {
+		//	continue;
+		//}
+
+		//if (!matchesCR.empty()) {
+		//	for (int i = 0; i < matchesCR.size(); i++) {
+		//		if (matchesCR[i][0].distance < .95 * matchesCR[i][1].distance) {
+		//			mt2.push_back(matchesCR[i][0]);
+		//		}
+		//	}
+		//}
+		//else {
+		//	continue;
+		//}
+		//if (!matchesCB.empty()) {
+		//	for (int i = 0; i < matchesCB.size(); i++) {
+		//		if (matchesCB[i][0].distance < .95 * matchesCB[i][1].distance) {
+		//			mt3.push_back(matchesCB[i][0]);
+		//		}
+		//	}
+		//}
+		//else {
+		//	continue;
+		//}
+
+		//cout << "mt1 Size: " << mt1.size() << "mt2 Size: " << mt2.size() << "mt1 Size: " << mt2.size() << endl;
+		//if (mt1.size() < 10 || mt2.size() < 10 || mt3.size() < 10) continue;
+		//Mat HL = getHomography(mt1, kpLeft, kpCenter);
+		//Mat HR = getHomography(mt2, kpRight, kpCenter);
+		//Mat HB = getHomography(mt3, kpBottom, kpCenter);
+		//mt1.clear();
+		//mt2.clear();
+		//mt3.clear();
+		////vector<Point2f> obj, scene;
+		////for (int i = 0; i < mt1.size(); i++) {
+		////	if ((mt1[i].queryIdx < kpCenter.size()) && (mt1[i].trainIdx < kpLeft.size())) {
+		////		obj.push_back(kpCenter[mt1[i].queryIdx].pt);
+		////		scene.push_back(kpLeft[mt1[i].trainIdx].pt);
+		////	}
+		////	//cout << "obj: " << obj[i] << endl;
+		////	//cout << "scene: " << scene[i] << endl;
+		////}
+		//////cout << mt1.size() << endl;
+
+		////if (obj.empty() || scene.empty()) continue;
+		////Mat H = findHomography(scene, obj, RANSAC);
+		//if (HL.empty()||HB.empty()||HR.empty()) continue;
+		Mat wLeft,wRight,wBottom;
+		//Mat rightTemplate = Mat::zeros(Size(R.size() * 2), R.type());
+		//Mat leftemplate = Mat::zeros(Size(R.size() * 2), R.type());
+		Mat centerTemplate = Mat::zeros(Size(R.size() * 2), R.type());
+		//Mat bottomTemplate = Mat::zeros(Size(R.size() * 2), R.type());
+
+		//Mat roi(rightTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
+		//Mat roi2(leftemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
+		Mat roi3(centerTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
+		//Mat roi4(bottomTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
+
+		//R.copyTo(roi);
+		//L.copyTo(roi2);
+		C.copyTo(roi3);
+		//B.copyTo(roi4);
+
+		//warpPerspective(leftemplate, wLeft, HL, Size(leftemplate.size()), INTER_CUBIC);
+		//warpPerspective(rightTemplate, wRight, HR, Size(leftemplate.size()), INTER_CUBIC);
+		//warpPerspective(bottomTemplate, wBottom, HB, Size(leftemplate.size()), INTER_CUBIC);
+		int a=10, b=20, c=30;
+		if (R.empty() || L.empty() || B.empty()) cout << "empty Image" << endl;
+		thread t1(warpThread, dscC, dscL, kpCenter, kpLeft, ref(b), L, ref(wLeft));
+		thread t2(warpThread, dscC, dscR, kpCenter, kpRight, ref(a), R, ref(wRight));
+		thread t3(warpThread, dscC, dscB, kpCenter, kpBottom, ref(c), B, ref(wBottom));
+		t1.join();
+		t2.join();
+		t3.join();
+		if (a == 0 || b == 0 || c == 0) continue;
+
+		Mat fstPano = AlphaBlending(centerTemplate, wBottom);
+		Mat scndPano = AlphaBlending(fstPano, wRight);
+		Mat thdPano = AlphaBlending(scndPano, wLeft);
+
+		//namedWindow("fstPano", WINDOW_FREERATIO);
+		imshow("fstPano", thdPano);
+		//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+		//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::seconds> (end - begin).count() << "[ns]" << std::endl;
+		if (waitKey(1000/60) == 27) break;
 
 
 	}
@@ -433,7 +565,6 @@ void Stitching::getDescriptorTCP(int port)
 	SOCKET clientSocket2;
 
 	SOCKET clientSocket = serv.createSocket(port);
-	this->sock3 = clientSocket;
 	if (port == 52000) {
 		clientSocket2 = serv.createSocket(80000);
 	}
@@ -441,8 +572,16 @@ void Stitching::getDescriptorTCP(int port)
 		clientSocket2 = serv.createSocket(90000);
 
 	}
- 
-	
+	else if (port == 42000) {
+		clientSocket2 = serv.createSocket(43000);
+
+	}
+	else if (port == 32000) {
+		clientSocket2 = serv.createSocket(33000);
+
+	}
+
+
 
 	//SOCKET clientSocket = this->serv.createUDPSocket(52000);
 
@@ -452,11 +591,11 @@ void Stitching::getDescriptorTCP(int port)
 	sockaddr_in client;
 	int clientLength = sizeof(client);
 	ZeroMemory(&client, clientLength);
-	int buffsize = 1024 * 1024*2;
+	int buffsize = 1024 * 1024 * 2;
 	setsockopt(clientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&buffsize, sizeof(buffsize));
 	int bufrow;
 	int bufcol;
-	char buf[1024 * 1024*2];
+	char buf[1024 * 1024 * 2];
 	int dscSize;
 	Mat dsc;
 	while (true)
@@ -474,22 +613,26 @@ void Stitching::getDescriptorTCP(int port)
 		if ((bytes2 = recv(clientSocket2, (char*)&bufcol, sizeof(bufcol), 0)) == -1) cout << ("recv failed dsc");
 
 
-		if ((bytes = recv(clientSocket, buf, bufcol*bufrow*4, 0)) == -1) cout << ("recv failed");
-		float *p=(float*)buf;
+		if ((bytes = recv(clientSocket, buf, bufcol * bufrow * 4, 0)) == -1) cout << ("recv failed");
+		float* p = (float*)buf;
 		dsc = Mat::zeros(bufrow, bufcol, CV_32FC1);
-		
-		int ptr = 0;
 
+		int ptr = 0;
+		typedef long float Float64;
 		for (int i = 0; i < bufrow; i++) {
+			float* ptrdsc = dsc.ptr<float>(i);
+
 			for (int j = 0; j < bufcol; j++) {
-				dsc.at<float>(i, j) = *p;
-				*p++;
+				//dsc.at<float>(i, j) = *p;
+				ptrdsc[j] = *p;
+				p++;
 				ptr = ptr + 1;
 
 			}
-		}	
+		}
+
 		string s = "dsc fertig";
-		int senddsctodsc = send(this->sock3, s.c_str(), sizeof(s), 0);
+		int senddsctodsc = send(clientSocket, s.c_str(), sizeof(s), 0);
 		//dsc.data = (uchar*)&buf[0];
 
 		//imshow("DSC", dsc);
@@ -514,14 +657,30 @@ void Stitching::getDescriptorTCP(int port)
 		{
 
 			this->dscLeft = dsc;
+			this->m_kpL = this->kptmpleft;
+			this->imgLeft = this->frametmpleft;
 			//cout << "dscLeft Size: " << dsc.size() << endl;
 			//cout << " " << endl;
 		}
 		else if (port == 52000) {
 
+			this->dscRight = dsc;
+			this->m_kpR = this->kptmpright;
+			this->imgRight = this->frametmpright;
+			//cout << "dscCenter Size: " << dsc.size() << endl;
+		}
+		else if (port == 42000) {
+
 			this->dscCenter = dsc;
-			this->m_kpC = this->kpCtmp;
-			this->imgCenter = this->frametmp;
+			this->m_kpC = this->kptmpcenter;
+			this->imgCenter = this->frametmpcenter;
+			//cout << "dscCenter Size: " << dsc.size() << endl;
+		}
+		else if (port == 32000) {
+
+			this->dscBottom = dsc;
+			this->m_kpB1 = this->kptmpbottom;
+			this->imgBottom1 = this->frametmpbottom;
 			//cout << "dscCenter Size: " << dsc.size() << endl;
 		}
 
@@ -572,7 +731,7 @@ void Stitching::getCudaDescriptorsTCP(int port)
 	int buffsize = 1024 * 1024;
 	setsockopt(clientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&buffsize, sizeof(buffsize));
 
-	char buf[1024 * 1024*2];
+	char buf[1024 * 1024 * 2];
 	int bufrow;
 	int bufcol;
 	vector<float> descriptors;
@@ -597,21 +756,21 @@ void Stitching::getCudaDescriptorsTCP(int port)
 
 		ZeroMemory(buf, sizeof(buf));
 		//for (int i = 0; i < size; i += bytes)
-		if ((bytes = recv(clientSocket,buf, sizeof(buf), 0)) == -1) cout << ("recv failed dsc");
-		float *p;
+		if ((bytes = recv(clientSocket, buf, sizeof(buf), 0)) == -1) cout << ("recv failed dsc");
+		float* p;
 
 		//for (p = (float*)&buf[0]; p < (float*)&buf[bytes - 1]; p++) {
 		//	descriptors.push_back(*p);
 		//	//*p++;
 		//}
 
-		for (p = (float*)&buf[0]; p < (float*)&buf[bufcol*bufrow*4]; p++) {
+		for (p = (float*)&buf[0]; p < (float*)&buf[bufcol * bufrow * 4]; p++) {
 			descriptors.push_back(*p);
 			//*p++;
 		}
 		int cnt = 0;
 
-		dscCpu=Mat::zeros(bufrow, bufcol, CV_32FC1);
+		dscCpu = Mat::zeros(bufrow, bufcol, CV_32FC1);
 		for (int i = 0; i < bufrow; i++) {
 			for (int j = 0; j < bufcol; j++) {
 				dscCpu.at<float>(i, j) = descriptors[cnt];
@@ -629,7 +788,6 @@ void Stitching::getCudaDescriptorsTCP(int port)
 		float *p = buf;
 		mu4.lock();
 		for (int i = 0; i < size; i++) {
-
 			descriptors.push_back(*p++);
 		}
 		mu4.unlock();*/
@@ -673,33 +831,32 @@ void Stitching::getCudaDescriptorsTCP(int port)
 void Stitching::getKeyPointsTCP(int port) {
 	std::this_thread::sleep_for(1s);
 	SOCKET clientSocket = this->serv.createSocket(port);
-	this->sock2 = clientSocket;
 	int bytes = 0;
 	vector<KeyPoint> veckp;
 	KeyPoint kp;
 
-	char buf[1024 * 1024*2];
+	char buf[1024 * 1024 * 2];
 	//KeyPoint buffer[3000];
 	float buffer;
-	KeyPoint *p;
+	KeyPoint* p;
 	Mat imgK;
 	int len = 800000;
 	while (true)
 	{
 		vector<KeyPoint> veckp;
-		
+
 
 		ZeroMemory(buf, sizeof(buf));
 		//for (int i = 0; i < len; i += bytes)
 		if ((bytes = recv(clientSocket, buf, sizeof(buf), 0)) == -1) cout << ("recv3 failed");
-		KeyPoint *p;
-		for (p = (KeyPoint*)&buf[0]; p <= (KeyPoint*)&buf[bytes-1]; p++) {
+		KeyPoint* p;
+		for (p = (KeyPoint*)&buf[0]; p <= (KeyPoint*)&buf[bytes - 1]; p++) {
 			veckp.push_back(*p);
 			//*p++;
 		}
 		p = nullptr;
 		string s = "kp fertig";
-		int sendkptokp = send(this->sock2, s.c_str(), sizeof(s), 0);
+		int sendkptokp = send(clientSocket, s.c_str(), sizeof(s), 0);
 		if (bytes == SOCKET_ERROR)
 		{
 			cerr << "Error in recv().Quitting" << endl;
@@ -712,29 +869,16 @@ void Stitching::getKeyPointsTCP(int port) {
 			break;
 		}
 		if (port == 53000) {
-			this->kpCtmp = veckp;
-			//cout << "Kp Size: " << veckp.size() << endl;
-			//if (this->imgCenter.empty()) continue;
-			//imgK = this->imgCenter.clone();
-			//drawKeypoints(imgK, veckp, imgK);
-			//cv::imshow("Frame with Center-Keypoints", imgK);
-			//if (waitKey(10) == 27)
-			//{
-			//	break;
-			//}
+			this->kptmpright = veckp;
 		}
 		else if (port == 59000) {
-
-			this->m_kpL = veckp;
-			//cout << "m_kpL Size: " << m_kpL.size() << endl;
-			//cout << " " << endl;
-			//mu2.lock();
-			//drawKeypoints(this->imgLeft, this->m_kpL, this->imgLeft);
-			//mu2.unlock();
-			//cv::imshow("Frame with LeftKeypoints", this->imgLeft);
-			//if (waitKey(1000 / 20) >= 0) {
-			//	break;
-			//}
+			this->kptmpleft = veckp;
+		}
+		else if (port == 41000) {
+			this->kptmpcenter = veckp;
+		}
+		else if (port == 31000) {
+			this->kptmpbottom = veckp;
 		}
 		/*Mat dsc;
 		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -754,15 +898,18 @@ void Stitching::getFrameTCP(int port, int imgNumber, String windowname) {
 	int width = 640;
 	int bytes = 0;
 	SOCKET clientSocket = this->serv.createSocket(port);
-	this->sock1 = clientSocket;
 	KeyPoint kp;
 	char buf[921600];
+	VideoWriter video1("frame1.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
+	//VideoWriter video2("frame2.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
+	//VideoWriter video3("frame3.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
+	//VideoWriter video4("frame4.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
 
 	while (true)
 	{
 		Mat img = Mat::zeros(height, width, CV_8UC3);
 		int imgSize;
-		imgSize = img.total()*img.elemSize();
+		imgSize = img.total() * img.elemSize();
 		ZeroMemory(buf, imgSize);
 		//Wait for client to send data
 		for (int i = 0; i < imgSize; i += bytes)
@@ -791,13 +938,37 @@ void Stitching::getFrameTCP(int port, int imgNumber, String windowname) {
 		}
 
 		if (port == 54000) {
-			this->frametmp = img.clone();
+			this->frametmpright = img.clone();
+			video1<<img;
 
 		}
 		else if (port == 58000) {
-			this->imgLeft = img.clone();
+			this->frametmpleft = img.clone();
+			//video2.write(img);
+			imshow("Bild1", img);
+			if (cv::waitKey(1000 / 15) == 27) {
+				std::cout << "Stop video record" << std::endl;
+				break;
+			}
+
 		}
+		else if (port == 40000) {
+			this->frametmpcenter = img.clone();
+			//video3.write(img);
+
+		}
+		else if (port == 30000) {
+			this->frametmpbottom = img.clone();
+			//video4.write(img);
+
+		}
+
+
 	}
+	video1.release();
+	//video2.release();
+	//video3.release();
+	//video4.release();
 	closesocket(clientSocket);
 
 	WSACleanup();
@@ -809,21 +980,32 @@ Mat Stitching::getAlpha(Mat dst1, Mat dst2) {
 	Mat alpha = Mat::zeros(Size(dst1.size()), dst1.type());
 
 
+	//for (int r = 0; r < dst1.rows; r++) {
+	//	for (int c = 0; c < dst2.cols; c++) {
+	//		if (r < dst1.rows && c < dst1.cols)
+	//		{
+	//			alpha.at<float>(r, c) = Float64(dst1.at<float>(r, c) / (dst1.at<float>(r, c) + dst2.at<float>(r, c)) + 0.00000000001);
+
+	//		}
+	//		else {
+	//			alpha.at<float>(r, c) = 0;
+	//		}
+	//		//cout << "dst2\t" << dst2.at<float>(r, c) << endl;
+	//		//cout << "alpha\t" << alpha.at<float>(r, c) << endl;
+
+	//	}
+	//}
 	for (int r = 0; r < dst1.rows; r++) {
-		for (int c = 0; c < dst2.cols; c++) {
-			if (r < dst1.rows&&c < dst1.cols)
-			{
-				alpha.at<float>(r, c) = Float64(dst1.at<float>(r, c) / (dst1.at<float>(r, c) + dst2.at<float>(r, c)) + 0.00000000001);
+		// We obtain a pointer to the beginning of row r
+		float* ptrA = dst1.ptr<float>(r);
+		float* ptrB = dst2.ptr<float>(r);
+		float* ptralpha = alpha.ptr<float>(r);
 
-			}
-			else {
-				alpha.at<float>(r, c) = 0;
-			}
-			//cout << "dst2\t" << dst2.at<float>(r, c) << endl;
-			//cout << "alpha\t" << alpha.at<float>(r, c) << endl;
-
+		for (int c = 0; c < dst1.cols; c++) {
+			ptralpha[c] = Float64(ptrA[c]/(ptrA[c]+ ptrB[c]));
 		}
 	}
+
 	return alpha;
 }
 
@@ -846,7 +1028,7 @@ Mat Stitching::getBeta(Mat dst1, Mat dst2) {
 	return beta;
 }
 
-void Stitching::takeDFT(Mat &source, Mat &destination)
+void Stitching::takeDFT(Mat& source, Mat& destination)
 {
 	Mat originalComplex[2] = { source, Mat::zeros(source.size(),CV_32F) };
 	Mat dftReady;
@@ -857,7 +1039,7 @@ void Stitching::takeDFT(Mat &source, Mat &destination)
 
 }
 
-void Stitching::showDFT(Mat &source)
+void Stitching::showDFT(Mat& source)
 {
 	Mat splitArray[2] = { Mat::zeros(source.size(),CV_32F),Mat::zeros(source.size(),CV_32F) };
 	split(source, splitArray);
@@ -869,7 +1051,7 @@ void Stitching::showDFT(Mat &source)
 
 }
 
-void Stitching::recenterDFT(Mat &source) {
+void Stitching::recenterDFT(Mat& source) {
 	int centerX = source.cols / 2;
 	int centerY = source.rows / 2;
 
@@ -888,7 +1070,7 @@ void Stitching::recenterDFT(Mat &source) {
 	swapMap.copyTo(q3);
 }
 
-void Stitching::inverseDFT(Mat &source, Mat &destination) {
+void Stitching::inverseDFT(Mat& source, Mat& destination) {
 	Mat inverse;
 	dft(source, inverse, DFT_INVERSE | DFT_REAL_OUTPUT | DFT_SCALE);
 	destination = inverse;
@@ -991,7 +1173,7 @@ Mat Stitching::makeNormalize(Mat img) {
 	//imshow("bin", bin);
 	//Mat kernel = Mat::ones(Size(55, 55), dst.type());
 	//dilate(bin, bin, kernel, Point(-1, -1), 2);
-
+	
 	distanceTransform(bin, dst, DIST_L2, 3.0);
 	double min, max;
 	cv::minMaxLoc(bin, &min, &max);
@@ -1014,7 +1196,7 @@ Mat Stitching::makeNormalize(Mat img) {
 	return dst;
 }
 
-vector<DMatch> Stitching::getSiftmatches(Mat &img1, Mat &img2, float a)
+vector<DMatch> Stitching::getSiftmatches(Mat& img1, Mat& img2, float a)
 {
 
 	vector <KeyPoint> kp1, kp2;
@@ -1046,25 +1228,29 @@ vector<DMatch> Stitching::getSiftmatches(Mat &img1, Mat &img2, float a)
 }
 
 
-Mat Stitching::getHomography(Mat img1, Mat img2, vector <DMatch> matches)
+Mat Stitching::getHomography(vector <DMatch> matches, vector<KeyPoint> kpObj, vector<KeyPoint> kpScn)
 {
-	vector<KeyPoint> kpObj, kpScn;
-	kpObj = getCurrentKeypoints(img1);
-	kpScn = getCurrentKeypoints(img2);
-	vector<Point2f> obj, scene;
+	
+	vector<Point2f> objtmp, scenetmp;
+	//cout << "matches size: " << matches.size() << endl;
 	for (int i = 0; i < matches.size(); i++) {
-		if ((matches[i].queryIdx < kpObj.size()) && (matches[i].trainIdx < kpScn.size())) {
-			obj.push_back(kpObj[matches[i].queryIdx].pt);
-			scene.push_back(kpScn[matches[i].trainIdx].pt);
-		}
+		//cout << "queryIdx an" << i << " : " << matches[i].queryIdx << endl;
+		//cout << "trainIdx an" << i << " : " << matches[i].trainIdx << endl;
+		//if ((matches[i].queryIdx < kpObj.size()) && (matches[i].trainIdx < kpScn.size())) {
+		scenetmp.push_back(kpScn[matches[i].queryIdx].pt);
+		objtmp.push_back(kpObj[matches[i].trainIdx].pt);
+
+
+		//}
 
 	}
-	Mat H = findHomography(scene, obj, RANSAC);
+	
+	Mat H = findHomography(objtmp, scenetmp, RANSAC);
 	return H;
 }
 
 
-void Stitching::VideoStream(String path, String windowname, double fps, Mat &frame) {
+void Stitching::VideoStream(String path, String windowname, double fps, Mat& frame) {
 	VideoCapture cap(path);
 
 	while (cap.isOpened()) {
@@ -1082,7 +1268,7 @@ void Stitching::VideoStream(String path, String windowname, double fps, Mat &fra
 
 
 
-void Stitching::CudaStitch(cuda::GpuMat &img1, cuda::GpuMat &img2, cuda::GpuMat &img3, cuda::GpuMat &img4) {
+void Stitching::CudaStitch(cuda::GpuMat& img1, cuda::GpuMat& img2, cuda::GpuMat& img3, cuda::GpuMat& img4) {
 	for (;;) {
 		this_thread::sleep_for(5s);
 
@@ -1210,28 +1396,57 @@ vector<DMatch> Stitching::getSiftmatchesFlann(Mat img1, Mat img2, float ratio_th
 
 Mat Stitching::AlphaBlending(Mat img, Mat addImg) {
 
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	
 	Mat dst1 = makeNormalize(img);
+//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
 	Mat dst2 = makeNormalize(addImg);
+	//std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
+	//std::cout << "Time difference2 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end2 - begin).count() << "[ns]" << std::endl;
 	Mat alpha = getAlpha(dst1, dst2);
+	//std::chrono::steady_clock::time_point end3 = std::chrono::steady_clock::now();
+	//std::cout << "Time difference3 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end3 - begin).count() << "[ns]" << std::endl;
 	//Mat beta = getBeta(dst1, dst2);
 	Mat Pano = Mat::zeros(Size(img.size()), img.type());
-
+	//unsigned char* inputPano = (unsigned char*)(Pano.data);
+	//unsigned char* inputImg = (unsigned char*)(img.data);
+	//unsigned char* inputaddImg = (unsigned char*)(addImg.data);
+	//unsigned char* inputalpha = (unsigned char*)(alpha.data);
 	//Erstes Alpha Blending (Mittleres und linkes Bild)
-	for (int r = 0; r < dst1.rows; r++)
-	{
-		for (int c = 0; c < dst1.cols; c++)
-		{
+	//for (int c = 0; c < dst1.cols; c++)
+	//{
+	//	for (int r = 0; r < dst1.rows; r++)
+	//	{
 
-			//firstpano.at<uchar>(r, c) = alpha1.at<float>(r, c) * (int)upgray.at<uchar>(r, c) + (1. - alpha1.at<float>(r, c)) * (int)lowgray.at<uchar>(r, c);
-			Pano.at<Vec3b>(r, c)[0] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[0] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[0];
-			Pano.at<Vec3b>(r, c)[1] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[1] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[1];
-			Pano.at<Vec3b>(r, c)[2] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[2] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[2];
+	//		//firstpano.at<uchar>(r, c) = alpha1.at<float>(r, c) * (int)upgray.at<uchar>(r, c) + (1. - alpha1.at<float>(r, c)) * (int)lowgray.at<uchar>(r, c);
+	//		//Pano.at<Vec3b>(r, c)[0] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[0] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[0];
+	//		//Pano.at<Vec3b>(r, c)[1] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[1] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[1];
+	//		//Pano.at<Vec3b>(r, c)[2] = alpha.at<float>(r, c) * img.at<Vec3b>(r, c)[2] + (1. - alpha.at<float>(r, c)) * addImg.at<Vec3b>(r, c)[2];
+	//		inputPano[dst1.step * c + img.channels() * r] = inputalpha[dst1.step * c + r] * inputImg[dst1.step * c + img.channels()*r] + (1. - inputalpha[dst1.step * c + r]) * inputaddImg[dst1.step * c + img.channels() * r];
+	//		inputPano[dst1.step * c + img.channels() * r+1] = inputalpha[dst1.step * c + r+1] * inputImg[dst1.step * c + img.channels() * r+1] + (1. - inputalpha[dst1.step * c + r+1]) * inputaddImg[dst1.step * c + img.channels() * r+1];
+	//		inputPano[dst1.step * c + img.channels() * r+2] = inputalpha[dst1.step * c + r+2] * inputImg[dst1.step * c + img.channels() * r+2] + (1. - inputalpha[dst1.step * c + r+2]) * inputaddImg[dst1.step * c + img.channels() * r+2];
 
+	//	}
+	//}
+	for (int r = 0; r < dst1.rows; r++) {
+		// We obtain a pointer to the beginning of row r
+		cv::Vec3b* ptr = Pano.ptr<cv::Vec3b>(r);
+		cv::Vec3b* ptr1 = img.ptr<cv::Vec3b>(r);
+		cv::Vec3b* ptr2 = addImg.ptr<cv::Vec3b>(r);
+		float* ptra = alpha.ptr<float>(r);
+
+		for (int c = 0; c < dst1.cols; c++) {
+			ptr[c] = cv::Vec3b(ptr1[c][0]*ptra[c]+(1.-ptra[c])*ptr2[c][0],
+				ptr1[c][1]*ptra[c] + (1. - ptra[c]) * ptr2[c][1], 
+				ptr1[c][2]*ptra[c] + (1. - ptra[c]) * ptr2[c][2]);
 		}
 	}
+	//std::chrono::steady_clock::time_point end4 = std::chrono::steady_clock::now();
+	//std::cout << "Time difference4 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end4 - end3).count() << "[ns]" << std::endl;
 	return Pano;
 }
-void Stitching::StitchAllImgs(cuda::GpuMat &warpBottom1GPU, cuda::GpuMat &warpBottom2GPU, cuda::GpuMat &warpRightGPU, cuda::GpuMat &warpLeftGPU)
+void Stitching::StitchAllImgs(cuda::GpuMat& warpBottom1GPU, cuda::GpuMat& warpBottom2GPU, cuda::GpuMat& warpRightGPU, cuda::GpuMat& warpLeftGPU)
 {
 	this_thread::sleep_for(3s);
 	while (true)
@@ -1380,7 +1595,7 @@ void Stitching::streamRealSense()
 			break;
 		}
 	}
-	
+
 }
 
 
@@ -1483,12 +1698,23 @@ void Stitching::getFrameRS()
 	Size sz = Size(640, 480);
 	rs2::pipeline pipe;
 	rs2::config cfg;
-	cfg.enable_stream(RS2_STREAM_COLOR, width, height, RS2_FORMAT_BGR8, 15);
+	cfg.enable_stream(RS2_STREAM_COLOR, width, height, RS2_FORMAT_BGR8, 30);
 	pipe.start(cfg);
+	rs2::context ctx;        // Create librealsense context for managing devices
+	std::vector<std::string> serials;
+	rs2::rates_printer printer;
+	rs2::colorizer color_map;
 
+	// Declare RealSense pipeline, encapsulating the actual device and sensors
+	for (auto&& dev : ctx.query_devices()) {
+		serials.push_back(dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
+		cout << dev.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) << endl;
+	}
 	rs2::frameset frames;
+
 	for (int i = 0; i < 30; i++)
 	{
+		cout << "empty image" << endl;
 		frames = pipe.wait_for_frames();
 	}
 	while (true) {
@@ -1496,19 +1722,22 @@ void Stitching::getFrameRS()
 		frames = pipe.wait_for_frames();
 		rs2::frame color_frame = frames.get_color_frame();
 		Mat color(sz, CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
-		Mat imgSURF = color;
-		if (imgSURF.empty()) continue;
-		Ptr<SURF> detector = SURF::create(100);
-		std::vector<KeyPoint> kp;
-		Mat dsc, out;
-		detector->detectAndCompute(imgSURF, noArray(), kp, dsc);
-		this->kptmp = kp;
-		this->dsctmp = dsc;
-		this->img = color;
-		dsc.release();
-		kp.clear();
+		//Mat imgSURF = color;
+		//if (imgSURF.empty()) continue;
+		//Ptr<SURF> detector = SURF::create(100);
+		//std::vector<KeyPoint> kp;
+		//Mat dsc, out;
+		//detector->detectAndCompute(imgSURF, noArray(), kp, dsc);
+		//this->kptmp = kp;
+		//this->dsctmp = dsc;
+		//this->img = color;
+		//dsc.release();
+		//kp.clear();
+		Mat img = color.clone();
+		imshow("Fr", img);
+		if (waitKey(10) == 27) break;
 		//this->rs = true;
-		
+
 	}
 
 
@@ -1522,7 +1751,7 @@ void Stitching::getFeaturesRS()
 		if (imgSURF.empty()) continue;
 		Ptr<SURF> detector = SURF::create(100);
 		std::vector<KeyPoint> kp;
-		Mat dsc,out;
+		Mat dsc, out;
 		detector->detectAndCompute(imgSURF, noArray(), kp, dsc);
 		this->kptmp = kp;
 		this->dsctmp = dsc;
@@ -1548,7 +1777,7 @@ vector<DMatch> Stitching::getSureMatches(Mat imgCPU1, Mat imgCPU2, double a)
 	surf(img2, cuda::GpuMat(), keypoints2GPU, descriptors2GPU);
 	vector<float> dsc;
 	surf.downloadDescriptors(descriptors1GPU, dsc);
-	
+
 	//	float *p = dsc.data();
 	//	for (int i = 0; i < dsc.size(); i++) {
 	//	cout << *p++ << endl;
@@ -1626,7 +1855,7 @@ vector<DMatch> Stitching::getSurfMatches(Mat img1, Mat img2, double a, double b,
 	std::vector<KeyPoint> kp1, kp2;
 	Mat surfdescriptor1, surfdescriptor2;
 
-	
+
 	detector->detectAndCompute(imgGray1, noArray(), kp1, surfdescriptor1);
 	detector->detectAndCompute(imgGray2, noArray(), kp2, surfdescriptor2);
 
@@ -1692,7 +1921,7 @@ Rect Stitching::lastRct(Mat img, int a) {
 	return rct12;
 }
 
-void Stitching::cropImg(Mat &img, Rect rct, int d)
+void Stitching::cropImg(Mat& img, Rect rct, int d)
 {
 
 	for (int r = 0; r < img.rows; r++) {
@@ -1702,14 +1931,14 @@ void Stitching::cropImg(Mat &img, Rect rct, int d)
 			int dX2 = rct.width - c;
 			int dY2 = rct.height - r;
 
-			if (((dX > d&&dY > d) && (dX2 < d&&dY2 < d)) && rct.contains(Point(c, r))) {
+			if (((dX > d && dY > d) && (dX2 < d && dY2 < d)) && rct.contains(Point(c, r))) {
 				img.at<Vec3b>(r, c) = Vec3b(0, 0, 0);
 			}
 		}
 	}
 }
 
-void Stitching::removeBlackPoints(Mat &img)
+void Stitching::removeBlackPoints(Mat& img)
 {
 	vector<Point> nonBlackList2;
 	nonBlackList2.reserve((int)img.rows + (int)img.cols);
