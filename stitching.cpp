@@ -337,19 +337,24 @@ void Stitching::getFeatures(int port1, int port2, int port3) {
 	WSACleanup();
 }
 
-void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2,int &a,Mat img,Mat &warpImg) {
+void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2,int &a,Mat img,Mat &warpImg,Mat &H) {
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
 	Stitching s;
 	int tmp = a;
 	cuda::GpuMat dsc1GPU, dsc2GPU;
 	dsc1GPU.upload(dsc1);
 	dsc2GPU.upload(dsc2);
+	std::chrono::steady_clock::time_point step2 = std::chrono::steady_clock::now();
+	std::cout << "Time difference gpu Upload on thread"<< a<<" = " << std::chrono::duration_cast<std::chrono::microseconds>(step2 - begin).count() << "[탎]" << std::endl;
 	Ptr<cuda::DescriptorMatcher> matcherGPU;
 	matcherGPU = cuda::DescriptorMatcher::createBFMatcher(NORM_L2);
 	Ptr<cv::DescriptorMatcher> matcher;
 	vector<vector<DMatch>> matches;
 	matcher = BFMatcher::create(NORM_L2, false);
 	matcherGPU->knnMatch(dsc1GPU, dsc2GPU, matches, 2);
-
+	std::chrono::steady_clock::time_point step3 = std::chrono::steady_clock::now();
+	std::cout << "Time difference matches on thread" << a << " = " << std::chrono::duration_cast<std::chrono::microseconds>(step3 - step2).count() << "[탎]" << std::endl;
 	vector<DMatch> mt1;
 	//matcher->knnMatch(dsc1, dsc2, matches, 2);
 
@@ -363,25 +368,28 @@ void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPo
 	else {
 		cout << "matches are empty" << endl;
 	}
-
+	std::chrono::steady_clock::time_point step4 = std::chrono::steady_clock::now();
+	std::cout << "Time difference good matches thread" << a << " = " << std::chrono::duration_cast<std::chrono::microseconds>(step4 - step3).count() << "[탎]" << std::endl;
 
 	//cout << "mt1 Size: " << mt1.size() << "mt2 Size: " << mt2.size() << "mt1 Size: " << mt2.size() << endl;
-	Mat H;
+
 	if (mt1.size()<10) {
 		cout << "Matches size in thread " << tmp << " is too less" << endl;
 		a = 0;
 	}
-	else {
+	else if(tmp != 10) {
 		H = s.getHomography(mt1, kp2, kp1);
+		std::chrono::steady_clock::time_point step5 = std::chrono::steady_clock::now();
+		std::cout << "Time difference homography on thread" << a << " = " << std::chrono::duration_cast<std::chrono::microseconds>(step5 - step4).count() << "[탎]" << std::endl;
 	}
 
-	mt1.clear();
 
-	if (H.empty()) { 
+
+	if (H.empty()&&tmp!=10) { 
 		cout << "Homopgrahy in thread " << tmp << "is empty" << endl;
 		a = 0; 
 	} 
-	else  {
+	else if(tmp!=10)  {
 		Mat Template = Mat::zeros(Size(img.size() * 2), img.type());
 
 		Mat roi(Template, Rect(img.cols / 2, img.rows / 2, img.cols, img.rows));
@@ -389,11 +397,13 @@ void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPo
 		cuda::GpuMat TemplateGPU, warpImgGPU, HGPU;
 		TemplateGPU.upload(Template);
 		//warpImgGPU.upload(warpImg);
+		
 		//warpPerspective(Template, warpImg, H, Size(Template.size()), INTER_CUBIC);
 		cuda::warpPerspective(TemplateGPU, warpImgGPU, H, Size(TemplateGPU.size()), INTER_CUBIC);
 		warpImgGPU.download(warpImg);
 
 	}
+
 	
 
 }
@@ -401,45 +411,35 @@ void Stitching::warpThread(Mat dsc1,Mat dsc2, vector<KeyPoint> kp1, vector<KeyPo
 void Stitching::realTimeStitching()
 {
 
-	vector<KeyPoint> kpRight, kpLeft,kpCenter,kpBottom;
-	std::this_thread::sleep_for(2s);
-	Mat dscR, dscL,dscC,dscB;
-	
-
+	//vector<KeyPoint> kpRight, kpLeft,kpCenter,kpBottom;
+	std::this_thread::sleep_for(1s);
+	//Mat dscR, dscL,dscC,dscB;
+	double data[9] = { 1.24126360,-0.012603,-177.417633,0.0095245,1.125,-5.7780,0.0004722133,-0.00012200247,1 };
+	Mat H_LR=Mat(3,3,CV_64FC1,data);
+	int i = 0;
 	while (true) {
 		if (this->m_kpR.empty() || this->m_kpL.empty() || this->dscLeft.empty() || this->dscRight.empty()||this->dscCenter.empty()||this->m_kpC.empty() || this->dscBottom.empty() || this->m_kpB1.empty()) {
 			continue;
 		}
-		//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
 		//if (this->rs == false || this->features == false) continue;
-		kpCenter.clear();
-		kpLeft.clear();
-		dscR.release();
-		dscL.release();
-		dscC.release();
-		kpRight.clear();
-		kpBottom.clear();
-		dscB.release();
 		vector<DMatch> mt1,mt2,mt3;
 		Mat L = this->imgLeft.clone();
 		Mat R = this->imgRight.clone();
 		Mat C = this->imgCenter.clone();
 		Mat B = this->imgBottom1.clone();
-		kpRight = this->m_kpR;
-		kpLeft = this->m_kpL;
-		dscL = this->dscLeft;
-		dscR = this->dscRight;
-		dscB = this->dscBottom;
-		dscC = this->dscCenter;
-		kpCenter = this->m_kpC;
-		kpBottom = this->m_kpB1;
+		vector<KeyPoint> kpRight = this->m_kpR;
+		vector<KeyPoint> kpLeft = this->m_kpL;
+		Mat dscL = this->dscLeft;
+		Mat dscR = this->dscRight;
+		Mat dscB = this->dscBottom;
+		Mat dscC = this->dscCenter;
+		vector<KeyPoint> kpCenter = this->m_kpC;
+		vector<KeyPoint> kpBottom = this->m_kpB1;
 		//this->rs = false;
 		//this->features = false;
-		//cout << "RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscCenter.rows << endl;
-		//cout << "RealTime " << "kpRight.size(): " << kpRight.size() << "= ?" << " dscRight.rows: " << dscRight.rows << endl;
-		//cout << "RealTime " << "kpLeft.size(): " << kpLeft.size() << "= ?" << " dscLeft.rows: " << dscLeft.rows << endl;
-
+		
 		if (kpLeft.size() != dscL.rows || kpRight.size() != dscR.rows || kpCenter.size() != dscC.rows || kpBottom.size() != dscB.rows) {
 			cout << "RealTime " << "kpLeft.size(): " << kpLeft.size() << "= ?" << " dscLCPU.rows: " << dscLeft.rows << endl;
 			cout << "RealTime " << "kpCenter.size(): " << kpCenter.size() << "= ?" << " dscCCPU.rows: " << dscRight.rows << endl;
@@ -447,104 +447,46 @@ void Stitching::realTimeStitching()
 		}
 
 
-		////Ptr<cv::cuda::DescriptorMatcher> matcher11;
-		//Ptr<cv::DescriptorMatcher> matcher, matcher2,matcher3;
-		//vector<vector<DMatch>> matchesCL,matchesCR,matchesCB;
-		//matcher = BFMatcher::create(NORM_L2, false);
-		//matcher2 = BFMatcher::create(NORM_L2, false);
-		//matcher3 = BFMatcher::create(NORM_L2, false);
-
-		//matcher->knnMatch(dscCenter, dscLeft, matchesCL, 2);
-		//matcher2->knnMatch(dscCenter, dscRight, matchesCR, 2);
-		//matcher3->knnMatch(dscCenter, dscBottom, matchesCB, 2);
-
-		//if (!matchesCL.empty()) {
-		//	for (int i = 0; i < matchesCL.size(); i++) {
-		//		if (matchesCL[i][0].distance < .95 * matchesCL[i][1].distance) {
-		//			mt1.push_back(matchesCL[i][0]);
-		//		}
-		//	}
-		//}
-		//else {
-		//	continue;
-		//}
-
-		//if (!matchesCR.empty()) {
-		//	for (int i = 0; i < matchesCR.size(); i++) {
-		//		if (matchesCR[i][0].distance < .95 * matchesCR[i][1].distance) {
-		//			mt2.push_back(matchesCR[i][0]);
-		//		}
-		//	}
-		//}
-		//else {
-		//	continue;
-		//}
-		//if (!matchesCB.empty()) {
-		//	for (int i = 0; i < matchesCB.size(); i++) {
-		//		if (matchesCB[i][0].distance < .95 * matchesCB[i][1].distance) {
-		//			mt3.push_back(matchesCB[i][0]);
-		//		}
-		//	}
-		//}
-		//else {
-		//	continue;
-		//}
-
-		//cout << "mt1 Size: " << mt1.size() << "mt2 Size: " << mt2.size() << "mt1 Size: " << mt2.size() << endl;
-		//if (mt1.size() < 10 || mt2.size() < 10 || mt3.size() < 10) continue;
-		//Mat HL = getHomography(mt1, kpLeft, kpCenter);
-		//Mat HR = getHomography(mt2, kpRight, kpCenter);
-		//Mat HB = getHomography(mt3, kpBottom, kpCenter);
-		//mt1.clear();
-		//mt2.clear();
-		//mt3.clear();
-		////vector<Point2f> obj, scene;
-		////for (int i = 0; i < mt1.size(); i++) {
-		////	if ((mt1[i].queryIdx < kpCenter.size()) && (mt1[i].trainIdx < kpLeft.size())) {
-		////		obj.push_back(kpCenter[mt1[i].queryIdx].pt);
-		////		scene.push_back(kpLeft[mt1[i].trainIdx].pt);
-		////	}
-		////	//cout << "obj: " << obj[i] << endl;
-		////	//cout << "scene: " << scene[i] << endl;
-		////}
-		//////cout << mt1.size() << endl;
-
-		////if (obj.empty() || scene.empty()) continue;
-		////Mat H = findHomography(scene, obj, RANSAC);
-		//if (HL.empty()||HB.empty()||HR.empty()) continue;
 		Mat wLeft,wRight,wBottom;
-		//Mat rightTemplate = Mat::zeros(Size(R.size() * 2), R.type());
-		//Mat leftemplate = Mat::zeros(Size(R.size() * 2), R.type());
+
 		Mat centerTemplate = Mat::zeros(Size(R.size() * 2), R.type());
-		//Mat bottomTemplate = Mat::zeros(Size(R.size() * 2), R.type());
-
-		//Mat roi(rightTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
-		//Mat roi2(leftemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
 		Mat roi3(centerTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
-		//Mat roi4(bottomTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
-
-		//R.copyTo(roi);
-		//L.copyTo(roi2);
 		C.copyTo(roi3);
-		//B.copyTo(roi4);
 
-		//warpPerspective(leftemplate, wLeft, HL, Size(leftemplate.size()), INTER_CUBIC);
-		//warpPerspective(rightTemplate, wRight, HR, Size(leftemplate.size()), INTER_CUBIC);
-		//warpPerspective(bottomTemplate, wBottom, HB, Size(leftemplate.size()), INTER_CUBIC);
+
+		std::chrono::steady_clock::time_point step2 = std::chrono::steady_clock::now();
+		std::cout << "Time threads = " << std::chrono::duration_cast<std::chrono::microseconds>(step2 - begin).count() << "[탎]" << std::endl;
 		int a=10, b=20, c=30;
+		Mat HL, HB;
+		//if (i == 0) {
+		//	int m;
+		//	Mat k;
+		//	warpThread(dscR, dscL, kpRight, kpLeft, ref(m), R, ref(k), H_LR);
+		//	i++;
+		//}
 		if (R.empty() || L.empty() || B.empty()) cout << "empty Image" << endl;
-		thread t1(warpThread, dscC, dscL, kpCenter, kpLeft, ref(b), L, ref(wLeft));
-		thread t2(warpThread, dscC, dscR, kpCenter, kpRight, ref(a), R, ref(wRight));
-		thread t3(warpThread, dscC, dscB, kpCenter, kpBottom, ref(c), B, ref(wBottom));
+		thread t1(warpThread, dscC, dscL, kpCenter, kpLeft, ref(b), L, ref(wLeft),ref(HL));
+		//thread t2(warpThread, dscC, dscR, kpCenter, kpRight, ref(a), R, ref(wRight));
+		thread t3(warpThread, dscC, dscB, kpCenter, kpBottom, ref(c), B, ref(wBottom),ref(HB));
 		t1.join();
-		t2.join();
+		//t2.join();
 		t3.join();
-		if (a == 0 || b == 0 || c == 0) continue;
+		Mat RTemplate = Mat::zeros(Size(R.size() * 2), R.type());
 
+		Mat roiR(RTemplate, Rect(R.cols / 2, R.rows / 2, R.cols, R.rows));
+		R.copyTo(roiR);
+		cuda::GpuMat TemplateGPU, warpImgGPU, HGPU;
+		TemplateGPU.upload(RTemplate);
+		cuda::warpPerspective(TemplateGPU, warpImgGPU, H_LR*(HL.inv()), Size(TemplateGPU.size()), INTER_CUBIC);
+		warpImgGPU.download(wRight);
+		if (a == 0 || b == 0 || c == 0) continue;
+		std::chrono::steady_clock::time_point step3 = std::chrono::steady_clock::now();
+		std::cout << "Time threads = " << std::chrono::duration_cast<std::chrono::microseconds>(step3 - step2).count() << "[탎]" << std::endl;
 		Mat fstPano = AlphaBlending(centerTemplate, wBottom);
 		Mat scndPano = AlphaBlending(fstPano, wRight);
 		Mat thdPano = AlphaBlending(scndPano, wLeft);
-
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+		std::cout << "Time alpha blending = " << std::chrono::duration_cast<std::chrono::microseconds>(end - step3).count() << "[탎]" << std::endl;
 		//namedWindow("fstPano", WINDOW_FREERATIO);
 		imshow("fstPano", thdPano);
 		//std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -900,10 +842,7 @@ void Stitching::getFrameTCP(int port, int imgNumber, String windowname) {
 	SOCKET clientSocket = this->serv.createSocket(port);
 	KeyPoint kp;
 	char buf[921600];
-	VideoWriter video1("frame1.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
-	//VideoWriter video2("frame2.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
-	//VideoWriter video3("frame3.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
-	//VideoWriter video4("frame4.avi", VideoWriter::fourcc('M', 'J', 'P', 'G'), 15., Size(640, 480));
+
 
 	while (true)
 	{
@@ -939,36 +878,26 @@ void Stitching::getFrameTCP(int port, int imgNumber, String windowname) {
 
 		if (port == 54000) {
 			this->frametmpright = img.clone();
-			video1<<img;
 
 		}
 		else if (port == 58000) {
 			this->frametmpleft = img.clone();
-			//video2.write(img);
-			imshow("Bild1", img);
-			if (cv::waitKey(1000 / 15) == 27) {
-				std::cout << "Stop video record" << std::endl;
-				break;
-			}
+
+
 
 		}
 		else if (port == 40000) {
 			this->frametmpcenter = img.clone();
-			//video3.write(img);
 
 		}
 		else if (port == 30000) {
 			this->frametmpbottom = img.clone();
-			//video4.write(img);
 
 		}
 
 
 	}
-	video1.release();
-	//video2.release();
-	//video3.release();
-	//video4.release();
+
 	closesocket(clientSocket);
 
 	WSACleanup();
@@ -1153,9 +1082,9 @@ void Stitching::setKeypoints(Mat img, vector <KeyPoint> kp) {
 
 }
 
-Mat Stitching::makeNormalize(Mat img) {
+void Stitching::makeNormalize(Mat img,Mat &dst) {
 
-	Mat grayImg, bin, dst;
+	Mat grayImg, bin;
 	if (img.type() != 0) {
 		cvtColor(img, grayImg, COLOR_BGR2GRAY);
 	}
@@ -1193,7 +1122,7 @@ Mat Stitching::makeNormalize(Mat img) {
 	//Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(9, 9), Point(-1, -1));
 	//dilate(dst, dst, kernel,Point(-1,-1));
 
-	return dst;
+	//return dst;
 }
 
 vector<DMatch> Stitching::getSiftmatches(Mat& img1, Mat& img2, float a)
@@ -1234,17 +1163,10 @@ Mat Stitching::getHomography(vector <DMatch> matches, vector<KeyPoint> kpObj, ve
 	vector<Point2f> objtmp, scenetmp;
 	//cout << "matches size: " << matches.size() << endl;
 	for (int i = 0; i < matches.size(); i++) {
-		//cout << "queryIdx an" << i << " : " << matches[i].queryIdx << endl;
-		//cout << "trainIdx an" << i << " : " << matches[i].trainIdx << endl;
-		//if ((matches[i].queryIdx < kpObj.size()) && (matches[i].trainIdx < kpScn.size())) {
 		scenetmp.push_back(kpScn[matches[i].queryIdx].pt);
 		objtmp.push_back(kpObj[matches[i].trainIdx].pt);
-
-
-		//}
-
 	}
-	
+
 	Mat H = findHomography(objtmp, scenetmp, RANSAC);
 	return H;
 }
@@ -1268,143 +1190,28 @@ void Stitching::VideoStream(String path, String windowname, double fps, Mat& fra
 
 
 
-void Stitching::CudaStitch(cuda::GpuMat& img1, cuda::GpuMat& img2, cuda::GpuMat& img3, cuda::GpuMat& img4) {
-	for (;;) {
-		this_thread::sleep_for(5s);
-
-		while (true) {
-			//mu.lock();
-			Mat img2CPU;
-			img2.download(img2CPU);
-			Mat centerTemplate = Mat::zeros(Size(img2CPU.size()), img2CPU.type());
-			cuda::GpuMat centerTemplateGPU;
-			centerTemplateGPU.upload(centerTemplate);
-			cuda::GpuMat roiCenter(centerTemplateGPU, Rect(0, 0, img1.cols, img1.rows));
-			img1.copyTo(roiCenter);
-			Rect cropLast(imgCenterGPU.cols / 5, imgCenterGPU.rows / 1.4, imgCenterGPU.cols / 1.5, imgCenterGPU.rows - imgCenterGPU.rows / 1.35);
-
-			centerTemplateGPU.download(centerTemplate);
-
-			//for (int r = 0; r < centerTemplate.rows; r++) {
-			//	for (int c = 0; c < centerTemplate.cols; c++) {
-			//		if (cropLast.contains(Point(c, r)) == true) {
-			//			centerTemplate.at<Vec3b>(r, c) = Vec3b(0, 0, 0);
-			//		}
-			//	}
-			//}
-
-			Mat dstcenter = makeNormalize(centerTemplate);
-			Mat dstright = makeNormalize(img2CPU);
-
-			Mat alpha1 = getAlpha(dstcenter, dstright);
-			Mat firstpano = Mat::zeros(Size(centerTemplate.size()), centerTemplate.type());
-
-			//Erstes Alpha Blending (Mittleres und linkes Bild)
-			for (int r = 0; r < dstcenter.rows; r++) {
-				for (int c = 0; c < dstcenter.cols; c++) {
-
-					//firstpano.at<uchar>(r, c) = alpha1.at<float>(r, c) * (int)upgray.at<uchar>(r, c) + (1. - alpha1.at<float>(r, c)) * (int)lowgray.at<uchar>(r, c);
-					firstpano.at<Vec3b>(r, c)[0] = alpha1.at<float>(r, c) * centerTemplate.at<Vec3b>(r, c)[0] + (1. - alpha1.at<float>(r, c)) * img2CPU.at<Vec3b>(r, c)[0];
-					firstpano.at<Vec3b>(r, c)[1] = alpha1.at<float>(r, c) * centerTemplate.at<Vec3b>(r, c)[1] + (1. - alpha1.at<float>(r, c)) * img2CPU.at<Vec3b>(r, c)[1];
-					firstpano.at<Vec3b>(r, c)[2] = alpha1.at<float>(r, c) * centerTemplate.at<Vec3b>(r, c)[2] + (1. - alpha1.at<float>(r, c)) * img2CPU.at<Vec3b>(r, c)[2];
-
-				}
-			}
-			centerTemplateGPU.upload(centerTemplate);
-			//cuda::GpuMat firstpanoGPU;
-			//firstpanoGPU.upload(firstpano);
-			Mat img3CPU;
-			img3.download(img3CPU);
-			Mat dstleft = makeNormalize(img3CPU);
-			Mat fpano = makeNormalize(firstpano);
-			Mat alpha2 = getAlpha(fpano, dstleft);
-			Mat secondpano = Mat::zeros(Size(centerTemplate.size()), centerTemplate.type());
-			for (int r = 0; r < dstright.rows; r++) {
-				for (int c = 0; c < dstright.cols; c++) {
-
-					//secondpano.at<uchar>(r, c) = alpha2.at<float>(r, c) * (int)firstpano.at<uchar>(r, c) + (1. - alpha2.at<float>(r, c)) * (int)graywarpRight.at<uchar>(r, c);
-					secondpano.at<Vec3b>(r, c)[0] = alpha2.at<float>(r, c) * firstpano.at<Vec3b>(r, c)[0] + (1. - alpha2.at<float>(r, c)) * img3CPU.at<Vec3b>(r, c)[0];
-					secondpano.at<Vec3b>(r, c)[1] = alpha2.at<float>(r, c) * firstpano.at<Vec3b>(r, c)[1] + (1. - alpha2.at<float>(r, c)) * img3CPU.at<Vec3b>(r, c)[1];
-					secondpano.at<Vec3b>(r, c)[2] = alpha2.at<float>(r, c) * firstpano.at<Vec3b>(r, c)[2] + (1. - alpha2.at<float>(r, c)) * img3CPU.at<Vec3b>(r, c)[2];
-
-				}
-			}
-			cuda::GpuMat secondpanoGPU;
-			secondpanoGPU.upload(secondpano);
-			Mat img4CPU;
-			img3.download(img4CPU);
-			Mat dstdown = makeNormalize(img4CPU);
-			normalize(dstdown, dstdown, 0., 1., NORM_MINMAX);
-			Mat fpano2 = makeNormalize(secondpano);
-			Mat alpha3 = getAlpha(fpano2, dstdown);
-			Mat thirdpano = Mat::zeros(Size(centerTemplate.size()), centerTemplate.type());
-			for (int r = 0; r < dstright.rows; r++) {
-				for (int c = 0; c < dstright.cols; c++) {
-
-					//thirdpano.at<uchar>(r, c) = alpha3.at<float>(r, c) * (int)secondpano.at<uchar>(r, c) + (1. - alpha3.at<float>(r, c)) * (int)graywarpDown.at<uchar>(r, c);
-					thirdpano.at<Vec3b>(r, c)[0] = alpha3.at<float>(r, c) * secondpano.at<Vec3b>(r, c)[0] + (1. - alpha3.at<float>(r, c)) * img4CPU.at<Vec3b>(r, c)[0];
-					thirdpano.at<Vec3b>(r, c)[1] = alpha3.at<float>(r, c) * secondpano.at<Vec3b>(r, c)[1] + (1. - alpha3.at<float>(r, c)) * img4CPU.at<Vec3b>(r, c)[1];
-					thirdpano.at<Vec3b>(r, c)[2] = alpha3.at<float>(r, c) * secondpano.at<Vec3b>(r, c)[2] + (1. - alpha3.at<float>(r, c)) * img4CPU.at<Vec3b>(r, c)[2];
-
-				}
-			}
-			cuda::GpuMat thirdpanoGPU;
-			thirdpanoGPU.upload(thirdpano);
-			//mu.unlock();
-
-			namedWindow("gestitched", WINDOW_OPENGL);
-			imshow("gestitched", thirdpanoGPU);
-			if (waitKey(1000 / 20) >= 0) {
-				break;
-			}
-		}
-	}
-}
-
-vector<DMatch> Stitching::getSiftmatchesFlann(Mat img1, Mat img2, float ratio_thresh)
-{
-	vector <KeyPoint> kp1, kp2;
-	Mat siftdescriptor1, siftdescriptor2;
-	Ptr<SIFT> sift = SIFT::create();
-	sift->detectAndCompute(img1, noArray(), kp1, siftdescriptor1);
-	sift->detectAndCompute(img2, noArray(), kp2, siftdescriptor2);
-	int FLANN_INDEX_KDTREE = 0;
-
-	Ptr<FlannBasedMatcher> flann = FlannBasedMatcher::create();
-
-	//Ptr<cv::DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::FLANNBASED);
-	vector<vector<DMatch>> matchesknn;
-	flann->knnMatch(siftdescriptor1, siftdescriptor2, matchesknn, 2);
-
-
-	std::vector<DMatch> good_matches;
-	for (size_t i = 0; i < matchesknn.size(); i++)
-	{
-		if (matchesknn[i][0].distance < ratio_thresh * matchesknn[i][1].distance)
-		{
-			good_matches.push_back(matchesknn[i][0]);
-		}
-	}
-
-	this->m_kpL = kp1;
-	this->m_kpR = kp2;
-	setKeypoints(img1, kp1);
-	setKeypoints(img2, kp2);
-	return good_matches;
-
-}
-
 Mat Stitching::AlphaBlending(Mat img, Mat addImg) {
 
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	
-	Mat dst1 = makeNormalize(img);
+	Mat dst1,dst2; 
+	thread t1(makeNormalize,img,ref(dst1));
 //	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 //std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
-	Mat dst2 = makeNormalize(addImg);
+	thread t2(makeNormalize,addImg,ref(dst2));
+	t1.join();
+	t2.join();
 	//std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
 	//std::cout << "Time difference2 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end2 - begin).count() << "[ns]" << std::endl;
-	Mat alpha = getAlpha(dst1, dst2);
+	Mat alpha;
+	if (this->m_cnt < 2 == 0) {
+		alpha = getAlpha(dst1, dst2);
+		this->m_alpha = alpha;
+	}
+	else {
+		alpha = this->m_alpha;
+	}
+	this->m_cnt++;
 	//std::chrono::steady_clock::time_point end3 = std::chrono::steady_clock::now();
 	//std::cout << "Time difference3 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end3 - begin).count() << "[ns]" << std::endl;
 	//Mat beta = getBeta(dst1, dst2);

@@ -35,7 +35,7 @@ class Stitching {
 	vector<KeyPoint> kptmp, kptmpright,kptmpleft,kptmpcenter,kptmpbottom;
 	Mat frametmpright,frametmpleft,frametmpcenter,frametmpbottom;
 	bool features = false;
-	static void warpThread(Mat dsc1, Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2, int& a, Mat img, Mat& warpImg);
+	static void warpThread(Mat dsc1, Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2, int& a, Mat img, Mat& warpImg,Mat &H);
 	bool rs = false;
 public:
 	server serv;
@@ -84,8 +84,8 @@ public:
 	void inverseDFT(Mat& source, Mat& destination);
 	void takeDFT(Mat& source, Mat& destination);
 	void showDFT(Mat& source);
-	Mat makeNormalize(Mat img);
-
+	static void makeNormalize(Mat img,Mat &dst);
+	
 	Rect lastRct(Mat img, int a = 0);
 	vector<Mat> takeCapture();
 	void getFrameRS();
@@ -94,5 +94,7 @@ public:
 	void cropImg(Mat& img, Rect rct, int d);
 	void removeBlackPoints(Mat& img);
 
-
+private:
+	Mat m_alpha;
+	int m_cnt;
 };
