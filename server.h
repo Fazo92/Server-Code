@@ -14,4 +14,5 @@ class server {
 public:
 	SOCKET createUDPSocket(int portNumber);
 	SOCKET createSocket(int port);
+	SOCKET createClientSocket(int port);
 };

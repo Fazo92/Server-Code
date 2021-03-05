@@ -2,7 +2,7 @@
 
 //server::server() {
 //}
-
+using namespace std;
 SOCKET server::createUDPSocket(int portNumber)
 {
 	WSADATA data;
@@ -52,8 +52,6 @@ SOCKET server::createUDPSocket(int portNumber)
 }
 
 SOCKET server::createSocket(int port) {
-	int bytes = 0;
-	int bytes1 = 0;
 	WSADATA wsData;
 	WORD ver = MAKEWORD(2, 2);
 	int ws0k = WSAStartup(ver, &wsData);
@@ -69,7 +67,6 @@ SOCKET server::createSocket(int port) {
 
 	}
 
-	//Bind the op adress and port to a socket
 	sockaddr_in hint;
 	//hint.sin_addr.s_addr = inet_addr("127.0.0.1");
 	hint.sin_family = AF_INET;
@@ -103,4 +100,43 @@ SOCKET server::createSocket(int port) {
 	}
 	closesocket(listening);
 	return clientSocket;
+}
+
+SOCKET server::createClientSocket(int port) {
+	string ipAddress = "10.42.0.1";			// IP Address of the server
+
+	// Initialize WinSock
+	WSAData data;
+	WORD ver = MAKEWORD(2, 2);
+	int wsResult = WSAStartup(ver, &data);
+	if (wsResult != 0)
+	{
+		cerr << "Can't start Winsock, Err #" << wsResult << endl;
+	}
+
+	// Create socket
+	SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET)
+	{
+		cerr << "Can't create socket, Err #" << WSAGetLastError() << endl;
+		WSACleanup();
+	}
+
+	// Fill in a hint structure
+	sockaddr_in hint;
+	hint.sin_family = AF_INET;
+	hint.sin_port = htons(port);
+	inet_pton(AF_INET, ipAddress.c_str(), &hint.sin_addr);
+
+	// Connect to server
+	int connResult = connect(sock, (sockaddr*)&hint, sizeof(hint));
+	if (connResult == SOCKET_ERROR)
+	{
+		cerr << "Can't connect to server, Err #" << WSAGetLastError() << endl;
+		closesocket(sock);
+		WSACleanup();
+		
+	}
+	return sock;
+
 }
