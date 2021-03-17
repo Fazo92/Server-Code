@@ -13,71 +13,14 @@ Stitching::Stitching() {
 	this->imgCenter = imgCenter;
 	this->imgBottom1 = imgBottom1;
 	this->imgBottom2 = imgBottom2;
-
+	
 }
 
-void Stitching::serialUDP(int port1, int port2, int port3, int port4) {
-	SOCKET clientsocket1 = this->serv.createUDPSocket(port1);
-
-	sockaddr_in client1, client2, client3, client4;
-	int clientLength1 = sizeof(client1);
-
-
-
-	int height = 480;
-	int width = 640;
-	int bytes = 0;
-	char buf[921600];
-
-	while (true)
-	{
-		Mat img = Mat::zeros(height, width, CV_8UC3);
-		int imgSize;
-		imgSize = img.total() * img.elemSize();
-		ZeroMemory(&client1, clientLength1);
-
-		ZeroMemory(buf, imgSize);
-		//Wait for client to send data
-
-		for (int i = 0; i < imgSize; i += bytes)
-			if ((bytes = recv(clientsocket1, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
-		//buf[bytes] = '\n';
-
-		int ptr = 0;
-		for (int i = 0; i < img.rows; i++) {
-			for (int j = 0; j < img.cols; j++) {
-				img.at<Vec3b>(i, j) = Vec3b(buf[ptr + 0], buf[ptr + 1], buf[ptr + 2]);
-				ptr = ptr + 3;
-			}
-		}
-
-		if (bytes == SOCKET_ERROR)
-		{
-			cerr << "Error in recv().Quitting" << endl;
-			break;
-		}
-
-		if (port1 == 54000) {
-			this->imgCenter = img.clone();
-
-		}
-		else if (port1 == 58000) {
-			this->imgLeft = img.clone();
-		}
-
-
-	}
-	closesocket(clientsocket1);
-
-	WSACleanup();
-
-}
 void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 {
 	SOCKET clientsocket1 = this->serv.createSocket(port1);
 	SOCKET clientsocket2 = this->serv.createSocket(port2);
 	SOCKET clientsocket3 = this->serv.createSocket(port3);
-	SOCKET clientsocket4 = this->serv.createSocket(port4);
 
 
 	int height = 480;
@@ -99,32 +42,39 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 	int bufcol;
 	char bufdsc[1024 * 1024 * 2];
 	int dscSize;
+	int kpsize;
 	Mat dsc;
 
+	
 	while (true)
 	{
-		if (this->features == true) continue;
-		Mat img = Mat::zeros(height, width, CV_8UC3);
-		int imgSize;
-		imgSize = img.total() * img.elemSize();
-		ZeroMemory(buf, imgSize);
-		//Wait for client to send data
-		for (int i = 0; i < imgSize; i += bytes)
-			if ((bytes = recv(clientsocket1, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
-		int ptr = 0;
-		for (int i = 0; i < img.rows; i++) {
-			for (int j = 0; j < img.cols; j++) {
-				img.at<Vec3b>(i, j) = Vec3b(buf[ptr + 0], buf[ptr + 1], buf[ptr + 2]);
-				ptr = ptr + 3;
-			}
-		}
+		//Mat img = Mat::zeros(height, width, CV_8UC3);
+		//int imgSize;
+		//imgSize = img.total() * img.elemSize();
+		//ZeroMemory(buf, imgSize);
+		////Wait for client to send data
+		//for (int i = 0; i < imgSize; i += bytes)
+		//	if ((bytes = recv(clientsocket1, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
+		//int ptr = 0;
+		//for (int i = 0; i < img.rows; i++) {
+		//	for (int j = 0; j < img.cols; j++) {
+		//		img.at<Vec3b>(i, j) = Vec3b(buf[ptr + 0], buf[ptr + 1], buf[ptr + 2]);
+		//		ptr = ptr + 3;
+		//	}
+		//}
+		ZeroMemory((char*)&dscSize, sizeof(dscSize));
+		ZeroMemory((char*)&kpsize, sizeof(kpsize));
+
+		recv(clientsocket1, (char*)&dscSize, sizeof(dscSize), 0);
+		recv(clientsocket1, (char*)&kpsize, sizeof(kpsize), 0);
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		vector<KeyPoint> veckp;
-
-		ZeroMemory(bufkp, sizeof(bufkp));
-		//for (int i = 0; i < len; i += bytes)
-		if ((bytes1 = recv(clientsocket2, bufkp, sizeof(bufkp), 0)) == -1) cout << ("recv3 failed");
+		int KpSize = 1024 * 1024 * 2;
+		KpSize = kpsize;
+		ZeroMemory(bufkp, KpSize);
+		for (int i = 0; i < KpSize; i += (bytes1))
+		if ((bytes1 = recv(clientsocket2, bufkp+i, KpSize-i, 0)) == -1) cout << ("recv3 failed");
 		KeyPoint* p;
 
 		for (p = (KeyPoint*)&bufkp[0]; p <= (KeyPoint*)&bufkp[bytes1 - 1]; p++) {
@@ -132,33 +82,32 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 		}
 		p = nullptr;
 		/////////////////////////////////////////////////////////////////////////////////////////
+		//int dscSize = 1024 * 1024 * 2;
 
-		ZeroMemory(bufdsc, sizeof(bufdsc));
+		ZeroMemory(bufdsc, dscSize);
 		//Wait for client to send data
-		ZeroMemory((char*)&bufrow, sizeof(bufrow));
 
-		if ((bytes4 = recv(clientsocket4, (char*)&bufrow, sizeof(bufrow), 0)) == -1) cout << ("recv failed dsc");
 
-		ZeroMemory((char*)&bufcol, sizeof(bufcol));
-
-		if ((bytes4 = recv(clientsocket4, (char*)&bufcol, sizeof(bufcol), 0)) == -1) cout << ("recv failed dsc");
-
-		if ((bytes3 = recv(clientsocket3, bufdsc, bufcol * bufrow * 4, 0)) == -1) cout << ("recv failed");
+		ZeroMemory((char*)&bufcol, dscSize);
+		for (int i = 0; i < dscSize; i += (bytes3))
+		if ((bytes3 = recv(clientsocket3, bufdsc+i, dscSize-i, 0)) == -1) cout << ("recv failed");
 		float* pdsc = (float*)bufdsc;
+		bufrow = bytes3 / (64 * 4);
+		bufcol = 64;
 		dsc = Mat::zeros(bufrow, bufcol, CV_32FC1);
 		for (int i = 0; i < bufrow; i++) {
 			for (int j = 0; j < bufcol; j++) {
 				dsc.at<float>(i, j) = *pdsc;
-				*pdsc++;
+				pdsc++;
 			}
 		}
 		pdsc = nullptr;
-		if (bytes == SOCKET_ERROR || bytes1 == SOCKET_ERROR || bytes2 == SOCKET_ERROR || bytes3 == SOCKET_ERROR)
+		if (bytes == SOCKET_ERROR || bytes1 == SOCKET_ERROR || bytes3 == SOCKET_ERROR)
 		{
 			cerr << "Error in recv().Quitting" << endl;
 			break;
 		}
-		if (bytes == 0 || bytes1 == 0 || bytes3 == 0 || bytes4 == 0)
+		if ( bytes1 == 0 || bytes3 == 0)
 		{
 			cout << "Client disconnected" << endl;
 			cout << "bytes: " << bytes << endl;
@@ -170,12 +119,12 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 		}
 		string s = "angekommen";
 		int sendresult = send(clientsocket3, s.c_str(), sizeof(s), 0);
-		this->features = true;
-
+		cout << "dsc size: " << dsc.size() << endl;
+		cout << "veckp size: " << veckp.size() << endl;
 		if (port1 == 54000) {
-			this->imgCenter = img.clone();
-			this->m_kpC = veckp;
-			this->dscCenter = dsc;
+			this->imgRight = img.clone();
+			this->m_kpR = veckp;
+			this->dscRight = dsc;
 
 		}
 		else if (port1 == 58000) {
@@ -186,10 +135,9 @@ void Stitching::serialTCP(int port1, int port2, int port3, int port4)
 
 
 	}
-	closesocket(clientsocket1);
+	//closesocket(clientsocket1);
 	closesocket(clientsocket2);
 	closesocket(clientsocket3);
-	closesocket(clientsocket4);
 
 	WSACleanup();
 
@@ -412,6 +360,67 @@ void Stitching::tmp() {
 
 
 }
+
+void Stitching::getHomoGraphyTCP(int port){
+	SOCKET clientSocket = serv.createSocket(port);
+	int port2 = port + 1500;
+	SOCKET clientSocket2 = serv.createSocket(port2);
+	int bytes = 0;
+	char buf[1000];
+	while (true) {
+		if (this->m_dscCam.empty() || this->dscRight.empty()) continue;
+		Mat dsc1 = this->m_dscCam;
+		Mat dsc2 = this->dscRight;
+		cuda::GpuMat dsc1GPU, dsc2GPU;
+		vector<KeyPoint> kp1 = this->m_kpCam;
+		dsc1GPU.upload(dsc1);
+		dsc2GPU.upload(dsc2);
+		Ptr<cuda::DescriptorMatcher> matcherGPU;
+		matcherGPU = cuda::DescriptorMatcher::createBFMatcher(NORM_L2);
+		Ptr<cv::DescriptorMatcher> matcher;
+		vector<vector<DMatch>> matches;
+		matcher = BFMatcher::create(NORM_L2, false);
+		matcherGPU->knnMatch(dsc1GPU, dsc2GPU, matches, 2);
+		if (matches.empty()) continue;
+		vector<DMatch> mt1;
+			for (int i = 0; i < matches.size(); i++) {
+				if (matches[i][0].distance < .7 * matches[i][1].distance) {
+					mt1.push_back(matches[i][0]);
+				}
+			 		}
+			int sendDsc = send(clientSocket, (char*)&mt1[0], sizeof(DMatch) * mt1.size(), 0);
+		
+			if (sendDsc == -1) cout << "Matches konnten nicht gesendet werden" << endl;
+
+			int sendKeyPoints = send(clientSocket2, (char*)&kp1[0], sizeof(KeyPoint) * kp1.size(), 0);
+			if (sendKeyPoints == -1)  cout << "KeyPoints konnten nicht gesendet werden" << endl;
+			cout << "KeyPOint size"<<kp1.size() << endl;
+
+
+
+			/////////////////////////////////////////////////////////////////
+			Mat H = Mat::zeros(3, 3, CV_64FC1);
+			const int sizeHomo = H.total() * H.elemSize();
+			ZeroMemory(buf, sizeof(buf));
+
+			//for (int i = 0; i < sizeof(buf); i += bytesH)
+			if ((bytes = recv(clientSocket2, buf, sizeof(buf), 0)) == -1) cout << "recv failed" << endl;
+			cout << "Homo Matrix" << bytes << endl;
+			//if (bytesH == 0) continue;
+			double* Hp = (double*)buf;
+
+			for (int i = 0; i < H.rows; i++) {
+				for (int j = 0; j < H.cols; j++) {
+					H.at<double>(i, j) = *Hp;
+					Hp++;
+				}
+			}
+			cout << "homo: " << H << endl;
+	}
+	
+	closesocket(clientSocket);
+}
+
 
 void Stitching::warpThread(Mat dsc1, Mat dsc2, vector<KeyPoint> kp1, vector<KeyPoint> kp2, int& a, Mat img, Mat& warpImg, Mat &H) {
 	Stitching s;
@@ -1139,8 +1148,8 @@ void Stitching::inverseDFT(Mat& source, Mat& destination) {
 Rect Stitching::findbiggestContour(Mat img) {
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
-	cvtColor(img, img, COLOR_BGR2GRAY);
-	threshold(img, img, 0, 255, THRESH_BINARY);
+	//cvtColor(img, img, COLOR_BGR2GRAY);
+	//threshold(img, img, 0, 255, THRESH_BINARY);
 	findContours(img, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_NONE);
 	int largest_area = 0;
 	int largest_contour_index = 0;
@@ -1151,7 +1160,7 @@ Rect Stitching::findbiggestContour(Mat img) {
 		double a = contourArea(contours[i], false);
 		if (a > largest_area) {
 			largest_area = a;
-			cout << i << " area  " << a << endl;
+			//cout << i << " area  " << a << endl;
 			// Store the index of largest contour
 			largest_contour_index = i;
 			// Find the bounding rectangle for biggest contour
@@ -1235,13 +1244,12 @@ Mat Stitching::makeNormalize(Mat img) {
 	//threshold(grayImg, bin, 0, 255, THRESH_BINARY);
 	binGPU.download(bin);
 	//imshow("bin", bin);
-	//Mat kernel = Mat::ones(Size(55, 55), dst.type());
+	//Mat kernel = Mat::ones(Size(5, 5), dst.type());
 	//dilate(bin, bin, kernel, Point(-1, -1), 2);
 
 	distanceTransform(bin, dst, DIST_L2, 3.0);
-	
-
-	//erode(dst, dst, kernel, Point(-1, -1), 2);
+	//normalize(dst, dst, 0.0, (1. - 0.0), NORM_MINMAX, -1);
+	//erode(dst, dst, kernel,Point(2, 2), 3);
 	//dstGPU.upload(dst);
 	/*double alpha = 0.;
 	cuda::normalize(dstGPU, dstGPU, alpha, (1.-alpha), NORM_MINMAX,-1);*/
@@ -1295,15 +1303,16 @@ Mat Stitching::getHomography(vector <DMatch> matches, vector<KeyPoint> kpObj, ve
 	vector<float> match_score;
 	for (int i = 0; i < matches.size(); i++) {
 	//if ((matches[i].queryIdx < kpObj.size()) && (matches[i].trainIdx < kpScn.size())) 
-		scenetmp.push_back(kpScn[matches[i].queryIdx].pt);
-		objtmp.push_back(kpObj[matches[i].trainIdx].pt);
-		match_score.push_back(matches[i].distance);
+		objtmp.push_back(kpObj[matches[i].queryIdx].pt);
+		scenetmp.push_back(kpScn[matches[i].trainIdx].pt);
+		//match_score.push_back(matches[i].distance);
 	
 	}
+	cout << "objtmp " << objtmp[3].x<< " kp x" << endl;
+	cout << "scenetmp " << scenetmp[3].x << " kp x" << endl;
 	Mat mask;
 	Mat H = findHomography(objtmp, scenetmp, RANSAC,1.5,mask);
 	//vector<Point2f> objtmp2, scenetmp2;
-
 	//for (int i = 0; i < mask.rows; i++) {
 	//	if (mask.at<uchar>(i, 0) == 1) {
 	//		scenetmp2.push_back(kpScn[matches[i].queryIdx].pt);
@@ -1502,41 +1511,41 @@ Mat Stitching::AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a) {
 	//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	cuda::GpuMat gpu_alpha[3], gpu_beta[3], gpu_alphares, gpu_betares, alphtmp, betatmp;
 	cuda::GpuMat alpha,beta;
-	if (this->counter % 50 < 3) {
+	//if (this->counter % 50 < 3) {
 		Mat dst1 = makeNormalize(img);
 		Mat dst2 = makeNormalize(addImg);
 
 		 alpha = getAlphaGPU(dst1, dst2);
 		 beta = cuda::GpuMat(alpha.size(), alpha.type(),Scalar::all(1));
-		 switch (a) {
-			case 0 :
-				this->m_alpha1 = alpha;
-				this->m_beta1 = beta;
-			case 1:
-				this->m_alpha2 = alpha;
-				this->m_beta2 = beta;
-			case 2:
-				this->m_alpha3 = alpha;
-				this->m_beta3 = beta;
-		 }
+	//	 switch (a) {
+	//		case 0 :
+	//			this->m_alpha1 = alpha;
+	//			this->m_beta1 = beta;
+	//		case 1:
+	//			this->m_alpha2 = alpha;
+	//			this->m_beta2 = beta;
+	//		case 2:
+	//			this->m_alpha3 = alpha;
+	//			this->m_beta3 = beta;
+	//	 }
 
 
-		if (this->counter == 50) this->counter = 0;
-	}
-	else {
-		switch (a) {
-		case 0:
-			alpha= this->m_alpha1;
-			beta= this->m_beta1;
-		case 1:
-			alpha = this->m_alpha2;
-			beta = this->m_beta2;
-		case 2:
-			alpha = this->m_alpha3;
-			beta = this->m_beta3;
-		}
-	}
-	this->counter++;
+	//	if (this->counter == 50) this->counter = 0;
+	//}
+	//else {
+	//	switch (a) {
+	//	case 0:
+	//		alpha= this->m_alpha1;
+	//		beta= this->m_beta1;
+	//	case 1:
+	//		alpha = this->m_alpha2;
+	//		beta = this->m_beta2;
+	//	case 2:
+	//		alpha = this->m_alpha3;
+	//		beta = this->m_beta3;
+	//	}
+	//}
+	//this->counter++;
 	vector<cuda::GpuMat> vecgpu1, vecgpu2;
 	//alphtmp.upload(alpha);
 	//betatmp.upload(beta);
@@ -2080,53 +2089,70 @@ void Stitching::getPointsOptFlow(Mat prev_img, Mat next_img, vector<Point2f>& pr
 	// The first thing we need to do is get the features
 	// we want to track.
 	//
+	cuda::GpuMat gpu_prev_img, gpu_next_img, gpu_cornersA, gpu_cornersB, gpu_features_found, gpu_err;
+
 	cvtColor(prev_img, prev_img, COLOR_BGR2GRAY);
 	cvtColor(next_img, next_img, COLOR_BGR2GRAY);
+
+	gpu_prev_img.upload(prev_img);
+	gpu_next_img.upload(next_img);
 	Mat err;
 	vector< cv::Point2f > cornersA, cornersB;
 	const int MAX_CORNERS = 500;
-	cv::goodFeaturesToTrack(
-		prev_img,                         // Image to track
-		cornersA,                     // Vector of detected corners (output)
-		MAX_CORNERS,                  // Keep up to this many corners
-		0.01,                         // Quality level (percent of maximum)
-		5,                            // Min distance between corners
-		cv::noArray(),                // Mask
-		3,                            // Block size
-		true,                        // true: Harris, false: Shi-Tomasi
-		0.04                          // method specific parameter
-	);
+	Ptr<cuda::CornersDetector> detector = cuda::createGoodFeaturesToTrackDetector(gpu_prev_img.type(),1000, 0.01, 5);
+	detector->detect(gpu_prev_img, gpu_cornersA);
 
-	cv::cornerSubPix(
-		prev_img,                           // Input image
-		cornersA,                       // Vector of corners (input and output)
-		cv::Size(win_size, win_size),   // Half side length of search window
-		cv::Size(-1, -1),               // Half side length of dead zone (-1=none)
-		cv::TermCriteria(
-			cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS,
-			20,                         // Maximum number of iterations
-			0.03                        // Minimum change per iteration
-		)
-	);
+
+	//cv::goodFeaturesToTrack(
+	//	prev_img,                         // Image to track
+	//	cornersA,                     // Vector of detected corners (output)
+	//	MAX_CORNERS,                  // Keep up to this many corners
+	//	0.01,                         // Quality level (percent of maximum)
+	//	5,                            // Min distance between corners
+	//	cv::noArray(),                // Mask
+	//	3,                            // Block size
+	//	true,                        // true: Harris, false: Shi-Tomasi
+	//	0.04                          // method specific parameter
+	//);
+
+	//cv::cornerSubPix(
+	//	prev_img,                           // Input image
+	//	cornersA,                       // Vector of corners (input and output)
+	//	cv::Size(win_size, win_size),   // Half side length of search window
+	//	cv::Size(-1, -1),               // Half side length of dead zone (-1=none)
+	//	cv::TermCriteria(
+	//		cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS,
+	//		20,                         // Maximum number of iterations
+	//		0.03                        // Minimum change per iteration
+	//	)
+	//);
 
 	// Call the Lucas Kanade algorithm
 	//
+	
+	Ptr<cuda::SparsePyrLKOpticalFlow> d_pyrLK_sparse = cuda::SparsePyrLKOpticalFlow::create(
+		Size(win_size * 2 + 1, win_size * 2 + 1),5, 20);
 	vector<uchar> features_found;
-	cv::calcOpticalFlowPyrLK(
-		prev_img,                         // Previous image
-		next_img,                         // Next image
-		cornersA,                     // Previous set of corners (from imgA)
-		cornersB,                     // Next set of corners (from imgB)
-		features_found,               // Output vector, each is 1 for tracked
-		err,                // Output vector, lists errors (optional)
-		cv::Size(win_size * 2 + 1, win_size * 2 + 1),  // Search window size
-		5,                            // Maximum pyramid level to construct
-		cv::TermCriteria(
-			cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS,
-			20,                         // Maximum number of iterations
-			0.3                         // Minimum change per iteration
-		)
-	);
+	
+	
+	d_pyrLK_sparse->calc(gpu_prev_img, gpu_next_img, gpu_cornersA, gpu_cornersB, gpu_features_found, gpu_err);
+	gpu_cornersA.download(cornersA);
+	gpu_cornersB.download(cornersB);
+	//cv::calcOpticalFlowPyrLK(
+	//	prev_img,                         // Previous image
+	//	next_img,                         // Next image
+	//	cornersA,                     // Previous set of corners (from imgA)
+	//	cornersB,                     // Next set of corners (from imgB)
+	//	features_found,               // Output vector, each is 1 for tracked
+	//	err,                // Output vector, lists errors (optional)
+	//	cv::Size(win_size * 2 + 1, win_size * 2 + 1),  // Search window size
+	//	5,                            // Maximum pyramid level to construct
+	//	cv::TermCriteria(
+	//		cv::TermCriteria::MAX_ITER | cv::TermCriteria::EPS,
+	//		20,                         // Maximum number of iterations
+	//		0.3                         // Minimum change per iteration
+	//	)
+	//);
 
 	//for (int i = 0; i < cornersA.size(); i++)
 	//{
@@ -2140,3 +2166,90 @@ void Stitching::getPointsOptFlow(Mat prev_img, Mat next_img, vector<Point2f>& pr
 	next_pts = cornersB;
 }
 
+vector<DMatch> Stitching::surfCuda(Mat img1, Mat img2, vector<KeyPoint> &kp1, vector<KeyPoint> &kp2,int thresh) {
+
+	
+	//cuda::SURF_CUDA surf;
+	//surf = cv::cuda::SURF_CUDA(200);
+	Ptr<cuda::SURF_CUDA> surf= cv::cuda::SURF_CUDA::create(thresh,4,2,false);
+	// detecting keypoints & computing descriptors
+	cuda::GpuMat keypoints1GPU, keypoints2GPU;
+	cuda::GpuMat descriptors1GPU, descriptors2GPU;
+	cuda::GpuMat gpu_img1, gpu_img2;
+	gpu_img1.upload(img1);
+	gpu_img2.upload(img2);
+	cuda::cvtColor(gpu_img1, gpu_img1, COLOR_BGR2GRAY);
+	cuda::cvtColor(gpu_img2, gpu_img2, COLOR_BGR2GRAY);
+
+
+	vector<float> descriptors1, descriptors2;
+	surf->detectWithDescriptors(gpu_img1, cuda::GpuMat(), keypoints1GPU, descriptors1GPU);
+	surf->detectWithDescriptors(gpu_img2, cuda::GpuMat(), keypoints2GPU, descriptors2GPU);
+	Mat dsc;
+	descriptors1GPU.download(dsc);
+	//surf(gpu_img1, cuda::GpuMat(), keypoints1GPU, descriptors1GPU);
+	//surf(gpu_img2, cuda::GpuMat(), keypoints2GPU, descriptors2GPU);
+	/*
+	Mat dsc,dsc_C; 
+	descriptors1GPU.download(dsc);
+	char* p = (char*)dsc.data;
+	cout << p << endl;
+	Mat imgx= imdecode(Mat(1, dsc.rows * dsc.cols, CV_32F, (void*)dsc.data), IMREAD_ANYDEPTH);*/
+
+	//dsc.convertTo(dsc_C, CV_8U, 255.);
+
+	//vector<int> compressionsparam;
+	//vector<uchar> encoded;
+	//compressionsparam.push_back(IMWRITE_EXR_TYPE);
+	//compressionsparam.push_back(80);
+	//imencode(".tiff", dsc_C, encoded);
+	//char *buf=(char*)encoded.data();
+	//cout << encoded.data() << endl;
+	//char* buf = new char[10000000];
+	//cout << encoded.size() << endl;
+	//cout << dsc.elemSize()*dsc.total() << endl;
+	//Mat matImg = cv::imdecode(Mat(1, dsc.elemSize() * dsc.total(), CV_8U, buf), IMREAD_COLOR);
+	//Mat imgF;
+	//matImg.convertTo(imgF, CV_32FC1,1/255.);
+	//Mat rawData = Mat(1, dsc.rows * dsc.cols, CV_8UC1, (char*)&encoded);
+	//Mat imgx= imdecode(rawData, IMREAD_ANYDEPTH);
+
+	//cout << imgx.at<float>(44,44) << endl;
+	//cout << dsc.at<float>(44,44) << endl;
+
+	//imshow("img", imgF);
+	//imshow("original", dsc);
+
+	//imshow("img", imgx);
+	//cout << imgF.at<float>(12,12) << endl;
+	//cout << dsc.at<float>(12, 12) << endl;
+
+	//waitKey(0);
+	cout << "FOUND " << descriptors1GPU.size() << " descriptors1GPU size" << endl;
+	cout << "FOUND " << descriptors2GPU.size() << " descriptors2GPU size" << endl;
+
+	//cout << "descriptors1GPU " << descriptors1GPU.data << " descriptors1GPU size" << endl;
+	// matching descriptors
+	Ptr<cuda::DescriptorMatcher> matcherGPU;
+	matcherGPU = cuda::DescriptorMatcher::createBFMatcher(NORM_L2);
+	vector<vector<DMatch>> matches;
+	vector<DMatch> gpu_matches;
+	//sort(gpu_matches.begin(), gpu_matches.end());
+	matcherGPU->knnMatch(descriptors1GPU, descriptors2GPU, matches, 2);
+	vector<DMatch> mt1;
+	surf->releaseMemory();
+
+	for (int i = 0; i < matches.size(); i++) {
+		if (matches[i][0].distance < 0.75f * matches[i][1].distance)	 {
+			mt1.push_back(matches[i][0]);
+		}
+	}
+	surf->downloadKeypoints(keypoints1GPU, kp1);
+	surf->downloadKeypoints(keypoints2GPU, kp2);
+
+	surf->downloadDescriptors(descriptors1GPU, descriptors1);
+	surf->downloadDescriptors(descriptors2GPU, descriptors2);
+	sort(mt1.begin(), mt1.end());
+	return mt1;
+
+}
