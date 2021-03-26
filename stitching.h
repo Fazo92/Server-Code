@@ -46,7 +46,6 @@ public:
 	Mat dscRight, dscCenter, dscLeft,dscBottom;
 	void CamFeatures();
 	Mat camFrame;
-
 	void getFrameTCP(int port, int imgNumber, String windowname);
 	void getKeyPointsTCP(int port);
 	void getDescriptorTCP(int port);
@@ -93,7 +92,7 @@ public:
 	void cropImg(Mat& img, Rect rct, int d);
 	void removeBlackPoints(Mat& img);
 	cuda::GpuMat getAlphaGPU(cuda::GpuMat dst1, cuda::GpuMat dst2);
-	Mat AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a);
+	Mat AlphaBlendingGPU(Mat &img, Mat &addImg, float scalar, int a);
 	void getHomoGraphyTCP(int port);
 private:
 	cuda::GpuMat m_alpha1, m_beta1, m_alpha2, m_beta2, m_alpha3, m_beta3;

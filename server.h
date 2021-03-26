@@ -24,9 +24,16 @@ public:
 	void recv_kpts(SOCKET clientSocket, SOCKET clientSocket2,std::vector<KeyPoint> &kp);
 	void recv_image(int port,int width, int height);
 	void recv_features(int port1, int port2, int port3);
+	void recv_obstacle(int port);
 	Mat m_img_C,m_warp_R, m_warp_L, m_warp_B;
 	Mat m_dsc_C;
 	void realTimeStitching();
 	std::vector<KeyPoint> m_kp_C;
-
+	std::mutex muC;
+	std::mutex muL;
+	std::mutex muR; 
+	std::mutex muB;
+	std::vector<Rect> m_rect_R, m_rect_L, m_rect_B, m_rect_C;
+	Rect biggest_Rct;
+	void find_biggst_rct();
 };

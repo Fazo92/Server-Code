@@ -1022,7 +1022,7 @@ Rect Stitching::findbiggestContour(Mat img) {
 		double a = contourArea(contours[i], false);
 		if (a > largest_area) {
 			largest_area = a;
-			cout << i << " area  " << a << endl;
+			//cout << i << " area  " << a << endl;
 			// Store the index of largest contour
 			largest_contour_index = i;
 			// Find the bounding rectangle for biggest contour
@@ -1085,40 +1085,26 @@ void Stitching::setKeypoints(Mat img, vector <KeyPoint> kp) {
 }
 
 Mat Stitching::makeNormalize(Mat img) {
-
+	cout << "			1" << endl;
 	Mat grayImg, bin,dst;
-	if (img.type() != 0) {
-		cvtColor(img, grayImg, COLOR_BGR2GRAY);
-	}
-	else {
-		grayImg = img;
-	}
+	//if (img.type() != 0) {
+	//	cvtColor(img, grayImg, COLOR_BGR2GRAY);
+	//}
+	//else {
+	//	grayImg = img;
+	//}
+	cvtColor(img, grayImg, COLOR_RGB2GRAY);
+
 
 	//removeBlackPoints(grayImg);
 
 	cuda::GpuMat grayImgGPU, binGPU, dstGPU;
-	grayImgGPU.upload(grayImg);
-	cuda::threshold(grayImgGPU, binGPU, 0, 255, THRESH_BINARY);
-	//threshold(grayImg, bin, 0, 255, THRESH_BINARY);
-	binGPU.download(bin);
-	//imshow("bin", bin);
-	//Mat kernel = Mat::ones(Size(55, 55), dst.type());
-	//dilate(bin, bin, kernel, Point(-1, -1), 2);
+	//grayImgGPU.upload(grayImg);
+	//cuda::threshold(grayImgGPU, binGPU, 0, 255, THRESH_BINARY);
+	threshold(grayImg, bin, 0, 255, THRESH_BINARY);
+
 	
 	distanceTransform(bin, dst, DIST_L2, 3.0);
-	double min, max;
-	cv::minMaxLoc(bin, &min, &max);
-	//imshow("dst", dst);
-	//waitKey(0);
-	//Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(9, 9), Point(-1, -1));
-
-	//erode(dst, dst, kernel, Point(-1, -1), 2);
-	dstGPU.upload(dst);
-	/*double alpha = 0.;
-	cuda::normalize(dstGPU, dstGPU, alpha, (1.-alpha), NORM_MINMAX,-1);*/
-
-
-	dstGPU.download(dst);
 
 	return dst;
 	//Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(9, 9), Point(-1, -1));
@@ -1203,7 +1189,7 @@ Mat Stitching::AlphaBlending(Mat img, Mat addImg) {
 
 	//std::chrono::steady_clock::time_point end2 = std::chrono::steady_clock::now();
 	//std::cout << "Time difference2 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end2 - begin).count() << "[ns]" << std::endl;
-	Mat alpha;
+	Mat alpha=getAlpha(dst1,dst2);
 
 	//std::chrono::steady_clock::time_point end3 = std::chrono::steady_clock::now();
 	//std::cout << "Time difference3 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end3 - begin).count() << "[ns]" << std::endl;
@@ -1229,19 +1215,23 @@ Mat Stitching::AlphaBlending(Mat img, Mat addImg) {
 
 	//	}
 	//}
-	for (int r = 0; r < dst1.rows; r++) {
-		// We obtain a pointer to the beginning of row r
-		cv::Vec3b* ptr = Pano.ptr<cv::Vec3b>(r);
-		cv::Vec3b* ptr1 = img.ptr<cv::Vec3b>(r);
-		cv::Vec3b* ptr2 = addImg.ptr<cv::Vec3b>(r);
-		float* ptra = alpha.ptr<float>(r);
+	Mat beta = Mat::ones(alpha.size(), alpha.type());
+	Mat betmp;
+	absdiff(alpha, beta, betmp);
+	blendLinear(img, addImg, alpha, betmp, Pano);
+	//for (int r = 0; r < dst1.rows; r++) {
+	//	// We obtain a pointer to the beginning of row r
+	//	cv::Vec3b* ptr = Pano.ptr<cv::Vec3b>(r);
+	//	cv::Vec3b* ptr1 = img.ptr<cv::Vec3b>(r);
+	//	cv::Vec3b* ptr2 = addImg.ptr<cv::Vec3b>(r);
+	//	float* ptra = alpha.ptr<float>(r);
 
-		for (int c = 0; c < dst1.cols; c++) {
-			ptr[c] = cv::Vec3b(ptr1[c][0]*ptra[c]+(1.-ptra[c])*ptr2[c][0],
-				ptr1[c][1]*ptra[c] + (1. - ptra[c]) * ptr2[c][1], 
-				ptr1[c][2]*ptra[c] + (1. - ptra[c]) * ptr2[c][2]);
-		}
-	}
+	//	for (int c = 0; c < dst1.cols; c++) {
+	//		ptr[c] = cv::Vec3b(ptr1[c][0]*ptra[c]+(1.-ptra[c])*ptr2[c][0],
+	//			ptr1[c][1]*ptra[c] + (1. - ptra[c]) * ptr2[c][1], 
+	//			ptr1[c][2]*ptra[c] + (1. - ptra[c]) * ptr2[c][2]);
+	//	}
+	//}
 	//std::chrono::steady_clock::time_point end4 = std::chrono::steady_clock::now();
 	//std::cout << "Time difference4 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end4 - end3).count() << "[ns]" << std::endl;
 	return Pano;
@@ -1763,7 +1753,7 @@ cuda::GpuMat Stitching::getAlphaGPU(cuda::GpuMat gpu_dst1, cuda::GpuMat gpu_dst2
 	//gpu_dst2.upload(dst2);
 	//gpu_alpha.upload(alpha);
 	cuda::add(gpu_dst1, gpu_dst2, added);
-	cuda::divide(gpu_dst1, added, resAlpha);
+	cuda::divide(gpu_dst1, added, resAlpha,2.);
 	return resAlpha;
 
 
@@ -1771,24 +1761,33 @@ cuda::GpuMat Stitching::getAlphaGPU(cuda::GpuMat gpu_dst1, cuda::GpuMat gpu_dst2
 
 void Stitching::makeNormalizethread(Mat img, cuda::GpuMat &dst_gpu) {
 	Mat grayImg, bin,dst;
-	if (img.type() != 0) {
-		cvtColor(img, grayImg, COLOR_BGR2GRAY);
-	}
-	else {
-		grayImg = img;
-	}
 
-	cuda::GpuMat grayImgGPU, binGPU, dstGPU;
-	grayImgGPU.upload(grayImg);
+	//if (img.type() != 0) {
+	//	cvtColor(img, grayImg, COLOR_BGR2GRAY);
+	//}
+	//else {
+	//	grayImg = img;
+	//}
+	
+	cuda::GpuMat grayImgGPU, binGPU, dstGPU,img_GPU;
+
+	img_GPU.upload(img);
+
+	cuda::cvtColor(img_GPU, grayImgGPU, COLOR_BGR2GRAY);
+	//grayImgGPU.upload(grayImg);
+
 	cuda::threshold(grayImgGPU, binGPU, 0, 255, THRESH_BINARY);
+
 	binGPU.download(bin);
 
 	distanceTransform(bin, dst, DIST_L2, 3.0);
 
 	dst_gpu.upload(dst);
 }
-Mat Stitching::AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a) {
+
+Mat Stitching::AlphaBlendingGPU(Mat &img, Mat &addImg, float scalar, int a) {
 	//std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
 	cuda::GpuMat gpu_alpha[3], gpu_beta[3], gpu_alphares, gpu_betares, alphtmp, betatmp;
 	cuda::GpuMat alpha, beta;
 	//if (this->counter % 50 < 3) {
@@ -1798,8 +1797,14 @@ Mat Stitching::AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a) {
 	thread t2(makeNormalizethread, addImg, ref(dst2));
 	t1.join();
 	t2.join();
+
+	//cout << "jetzt normalize upload" << endl;
+
+	//cout << "normalized done" << endl;
 	alpha = getAlphaGPU(dst1, dst2);
 	beta = cuda::GpuMat(alpha.size(), alpha.type(), Scalar::all(1));
+	//cout << "alpha and beta done" << endl;
+
 	// switch (a) {
 	//		case 0 :
 	//			this->m_alpha1 = alpha;
@@ -1828,53 +1833,12 @@ Mat Stitching::AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a) {
 	//		beta = this->m_beta3;
 	//	}
 	//}
-	this->counter++;
+	//this->counter++;
 	vector<cuda::GpuMat> vecgpu1, vecgpu2;
 	//alphtmp.upload(alpha);
 	cuda::absdiff(alpha, beta, betatmp);
 
-	//gpu_alpha[0] = alpha.clone();
-	//gpu_alpha[1] = alpha.clone();
-	//gpu_alpha[2] = alpha.clone();
-	//gpu_beta[0] = beta.clone();
-	//gpu_beta[1] = beta.clone();
-	//gpu_beta[2] = beta.clone();
-	//vecgpu1.push_back(gpu_alpha[0]);
-	//vecgpu1.push_back(gpu_alpha[1]);
-	//vecgpu1.push_back(gpu_alpha[2]);
-	//vecgpu2.push_back(gpu_beta[0]);
-	//vecgpu2.push_back(gpu_beta[1]);
-	//vecgpu2.push_back(gpu_beta[2]);
 
-	//cuda::merge(vecgpu1, gpu_alphares);
-	//cuda::merge(vecgpu2, gpu_betares);
-
-	//cuda::GpuMat gpu_img1, gpu_img2, gpu1[4], gpu2[4], res1, res2, pano;
-	//vector<cuda::GpuMat> vec1, vec2;
-
-	//gpu_img1.upload(img);
-	//gpu_img2.upload(addImg);
-
-
-	//cuda::GpuMat result1, result2;
-	//cuda::GpuMat newgpuimg1, newgpuimg2, newalph, newbeta;
-	//gpu_img1.convertTo(newgpuimg1, CV_64F, (1. / 255.));
-	//gpu_alphares.convertTo(newalph, CV_64F);
-	//cuda::multiply(gpu_alphares, cv::Scalar::all(scalar), gpu_alphares);
-	//cuda::multiply(newgpuimg1, newalph, result1);
-
-	//cuda::absdiff(gpu_betares, gpu_alphares, gpu_betares);
-
-	//gpu_betares.convertTo(newbeta, CV_64F);
-
-	//gpu_img2.convertTo(newgpuimg2, CV_64F, (1. / 255.));
-
-	//cuda::multiply(newgpuimg2, newbeta, result2);
-
-	//cuda::add(result1, result2, pano);
-
-
-	//Mat Pano = Mat::zeros(img.size(), img.type());
 	Mat Pano;
 	cuda::GpuMat pano2, panothresh, panodiff;
 	//pano.convertTo(pano2, CV_8U, 255.);
@@ -1883,10 +1847,14 @@ Mat Stitching::AlphaBlendingGPU(Mat img, Mat addImg, float scalar, int a) {
 
 	cuda::GpuMat gpu_img1, gpu_img2;
 	gpu_img1.upload(img);
+
 	gpu_img2.upload(addImg);
+
 	cuda::blendLinear(gpu_img1, gpu_img2, alpha, betatmp, panodiff);
 
 	panodiff.download(Pano);
+	gpu_alpha->release();
+	gpu_beta->release();
 	/*std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	std::cout << "Time difference4 = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;*/
 

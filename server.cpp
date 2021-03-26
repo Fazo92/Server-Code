@@ -251,161 +251,131 @@ void server::recv_image(int port, int height, int width) {
 	//const int imgSize = width * height * 3;
 	SOCKET clientSocket = createSocket(port);
 	//SOCKET clientSocket2 = createSocket(port+1);
-
+	
 	while (true) {
-		Mat img = Mat::zeros(height, width, CV_8UC3);
 
-		const int imgSize = img.total() * img.elemSize();
+		//int bytes_dim = 0;
+		//char* buf_dim = new char[4];
+		//for (int i = 0; i < sizeof(buf_dim); i++) {
+		//	if ((bytes_dim = recv(clientSocket, buf_dim + i, sizeof(buf_dim) - i, 0)) == -1) cout << "recv number on port: " << port << " failed " << endl;
+		//}
+		//int* pt = (int*)buf_dim;
+		//int imgSize = *pt;
+		//int bytes = 0;
+		//char* buf = new char[imgSize];
+		//cout << imgSize << endl;
+		////ZeroMemory(buf, imgSize);
+		//for (int i = 0; i < imgSize; i += bytes)
+		//	if ((bytes = recv(clientSocket, buf + i, imgSize - i, 0)) == -1) cout << "recv img on port: " << port << " failed " << endl;
+		//
+		//Mat rawData = Mat(1, imgSize, CV_8UC1, buf);
+		//Mat img = imdecode(rawData, IMREAD_COLOR);
 
-		char* buf = new char[imgSize];
-
+		Mat img = Mat::zeros(480 * 2, 640 * 2, CV_8UC3);
+		int imgSize = img.total() * img.elemSize();
+		//char* buf = new char[imgSize];
 		int bytes = 0;
+		for (int i = 0; i < imgSize; i += bytes)
+			if ((bytes = recv(clientSocket,reinterpret_cast<char*>(img.data), imgSize , MSG_WAITALL)) == -1) cout << "recv img on port: " << port << " failed " << endl;
 
-		ZeroMemory(buf, imgSize);
-		/*for (int i = 0; i < imgSize; i += bytes)
-			if ((bytes = recv(clientSocket, buf+i , imgSize-i , 0)) == -1) cout << ("recv failed");
-		cout << "bytes image: " << bytes << endl;
-			Mat rawData = Mat(1, height * width, CV_8U, buf);
 
-			img = imdecode(rawData, IMREAD_COLOR);*/
-			//if (img.empty()) {
-			//	img = Mat::ones(height, width, CV_8UC3);
+			//ZeroMemory(buf, imgSize);
+			////Wait for client to send data
+			//for (int i = 0; i < imgSize; i += bytes)
+			//	if ((bytes = recv(clientSocket, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
+			//int ptr = 0;
+			//for (int i = 0; i < img.rows; i++) {
+			//	for (int j = 0; j < img.cols; j++) {
+			//		img.at<Vec3b>(i, j) = Vec3b(buf[ptr + 0], buf[ptr + 1], buf[ptr + 2]);
+			//		ptr = ptr + 3;
+			//		//cout << buf[ptr + 0] << endl << buf[ptr + 1] << endl << buf[ptr + 2] << endl;
+
+			//	}
 			//}
 
-		for (int i = 0; i < imgSize; i += bytes) {
-			if ((bytes = recv(clientSocket, buf + i, imgSize - i, 0)) == -1) cout << ("recv failed");
-		}
-		int ptr = 0;
-		for (int i = 0; i < img.rows; i++) {
-			for (int j = 0; j < img.cols; j++) {
-				img.at<Vec3b>(i, j) = Vec3b(buf[ptr + 0], buf[ptr + 1], buf[ptr + 2]);
-				ptr = ptr + 3;
-			}
-		}
-
-//
-//		ZeroMemory(buf_depth, depth_imgSize);
-//
-//		for (int i = 0; i < depth_imgSize; i += bytes_depth) {
-//			if ((bytes_depth = recv(clientSocket2, buf_depth + i, depth_imgSize - i, 0)) == -1) cout << ("recv failed");
-//		}
-//		int ptr_d = 0;
-//		for (int i = 0; i < depth_img.rows; i++) {
-//			for (int j = 0; j < depth_img.cols; j++) {
-//				depth_img.at<Vec3b>(i, j) = Vec3b(buf_depth[ptr_d + 0], buf_depth[ptr_d + 1], buf_depth[ptr_d + 2]);
-//				ptr_d = ptr_d + 3;
-//			}
-//		}
-//		imshow("img", depth_img);
-//if (waitKey(1000 / 30) >= 0) break;
-
 		if (port == 30000) {
+			muC.lock();
 			m_img_C= img;
+			muC.unlock();
+
 			if (m_img_C.empty()) cout << "imgC empty" << endl;
-			//imshow("img", img);
+			//imshow("imgC", img);
 			//if (waitKey(1000 / 30) >= 0) break;
 		}
 		else if (port == 20000) {
+			muR.lock();
 			m_warp_R= img;
+			muR.unlock();
 			if (m_warp_R.empty()) cout << "m_warp_R empty" << endl;
-
-		}
-		else if (port == 10000) {
-			m_warp_L = img;
-			if (m_warp_L.empty()) cout << "m_warp_L empty" << endl;
-
-			//imshow("img", img);
+			//imshow("imgR", img);
 			//if (waitKey(1000 / 30) >= 0) break;
 		}
-		else if (port == 40000) {
-			m_warp_B = img;
-			if (m_warp_B.empty()) cout << "m_warp_B empty" << endl;
+		else if (port == 10000) {
+			muL.lock();
+			m_warp_L = img;
+			muL.unlock();
+			if (m_warp_L.empty()) cout << "m_warp_L empty" << endl;
+			//imshow("imgL", img);
+			//if (waitKey(1000 / 30) >= 0) break;
 
 		}
-
+		else if (port == 40000) {
+			muB.lock();
+			m_warp_B = img;
+			muB.unlock();
+			if (m_warp_B.empty()) cout << "m_warp_B empty" << endl;
+			//imshow("imgB", img);
+			//if (waitKey(1000 / 30) >= 0) break;
+		}
 	}
 	
 }
 
 void server::recv_features(int port1, int port2, int port3) {
+	SOCKET clientSocket2 = createSocket(port2);
 
 	SOCKET clientSocket1 = createSocket(port1);
-	//SOCKET clientSocket2 = createSocket(port2);
-	SOCKET clientSocket3 = createSocket(port3);
+	//SOCKET clientSocket3 = createSocket(port3);
 
 	while (true) {
-		int bytes = 0;
-		int bytes_kp = 0;
-		int bytes_bufdsc = 0;
-		int bytes_kp_num = 0;
-		int buf_dsc;
-		int kp_size;
-		ZeroMemory((char*)&buf_dsc, sizeof(buf_dsc));
+		char* buf_dim = new char[4];
+		int bytes_dim = 0;
+		int bytes_dsc = 0;
+		int bytes_kpts = 0;
 
-		for(int i=0;i< sizeof(buf_dsc);i+=bytes_bufdsc)
-			if ((bytes_bufdsc=recv(clientSocket3, (char*)&buf_dsc+i, sizeof(buf_dsc)-i, 0))==-1) cout << "dsc recv failed" << endl;
-
-		ZeroMemory((char*)&kp_size, sizeof(kp_size));
-
-		for (int i = 0; i < sizeof(kp_size); i += bytes_kp_num)
-			if ((bytes_kp_num = recv(clientSocket3, (char*)&kp_size+i, sizeof(kp_size)-i, 0))==-1) cout << "dsc kp failed" << endl;
-
-
-		//const int dscSize = 1024*1024*sizeof(float);
-		const int dscSize = buf_dsc;
-
-		char* buf = new char[dscSize];
-		ZeroMemory(buf, dscSize);
-		for (int i = 0; i < dscSize; i += bytes)
-			if ((bytes = recv(clientSocket1, buf + i, dscSize - i, 0)) == -1) cout << "dsc recv failed" << endl;
+		if ((bytes_dim = recv(clientSocket2, buf_dim, 4, MSG_WAITALL)) == -1) cout << "receiving kp dim failed" << endl;
+		int* pt_dim = (int*)buf_dim;
+		int kpSize = *pt_dim;
+		int dscSize = ((kpSize / sizeof(KeyPoint) * 4 * 64));
 		int dsc_cols = 64;
-		int dsc_rows = dscSize / (dsc_cols * 4);
-		float* p = (float*)buf;
+		int dsc_rows = (dscSize / (64 * sizeof(float)));
 		Mat dsc = Mat::zeros(dsc_rows, dsc_cols, CV_32FC1);
-		for (int i = 0; i < dsc_rows; i++) {
-			float* ptrdsc = dsc.ptr<float>(i);
-			for (int j = 0; j < dsc_cols; j++) {
-				ptrdsc[j] = *p;
-				p++;
-			}
-		}
 
-		///////////////////////////////////////////////////
-		std::vector<KeyPoint> keyPoints;
-		//const int kpSize = 1024 * 10 * sizeof(KeyPoint);
-		const int kpSize = kp_size;
+		if ((bytes_dsc = recv(clientSocket1, reinterpret_cast<char*>(dsc.data), dscSize, MSG_WAITALL)) == -1) cout << "dsc recv failed" << endl;
+		vector<KeyPoint> kpts;
+		kpts.resize(kpSize / sizeof(KeyPoint));
+		if ((bytes_kpts = recv(clientSocket1, reinterpret_cast<char*>(&kpts[0]), kpSize, MSG_WAITALL)) == -1) cout << "kpts recv failed" << endl;
 
-		char* buf_kp = new char[kpSize];
-
-		ZeroMemory(buf_kp, kpSize);
-		for (int i = 0; i < kp_size; i += bytes_kp)
-			if ((bytes_kp = recv(clientSocket1, buf_kp + i, kpSize - i, 0)) == -1) cout << ("recv kp failed");
-
-		KeyPoint* p_kp;
-		for (p_kp = (KeyPoint*)&buf_kp[0]; p_kp <= (KeyPoint*)&buf_kp[bytes_kp - 1]; p_kp++) {
-			keyPoints.push_back(*p_kp);
-		}
-		if (bytes_kp == SOCKET_ERROR)
-		{
-			cerr << "Error in recv().Quitting" << endl;
-		}
-		//cout << "dsc: " << dsc.size() << endl;
-		//cout << " kpts: " << keyPoints.size() << endl;
-		if (keyPoints.size() != dsc.rows) {
+		if (kpts.size() != dsc.rows) {
 			//cout <<"current "<< keyPoints.size() << dsc.size() << endl;
 			//cout << "prev " << m_kp_C.size() << m_dsc_C.size() << endl;
 
 			cout << "dims don't not match" << endl;
 			continue;
 		}
-		m_kp_C = keyPoints;
+		m_kp_C = kpts;
 		m_dsc_C = dsc;
+		delete[] buf_dim;
+		kpts.clear();
+		dsc.release();
 	}
 	closesocket(clientSocket1);
-	//closesocket(clientSocket2);
-	closesocket(clientSocket3);
+	closesocket(clientSocket2);
+	//closesocket(clientSocket3);
 
 }
+
+
 
 void server::send_fts(int port1, int port2, int port3) {
 	SOCKET clientSocket1 = createSocket(port1);
@@ -418,10 +388,16 @@ void server::send_fts(int port1, int port2, int port3) {
 		vector<KeyPoint>kp = m_kp_C;
 		int dscSize = dsc.total() * dsc.elemSize();
 		int kp_size = kp.size() * sizeof(KeyPoint);
-		send(clientSocket3, (char*)&dscSize, sizeof(dscSize), 0);
-		send(clientSocket3, (char*)&kp_size, sizeof(kp_size), 0);
+		int sendNumber=send(clientSocket3, (char*)&kp_size, sizeof(kp_size), 0);
 		int sendDsc = send(clientSocket1, (char*)dsc.data, dscSize, 0);
 		int sendKp = send(clientSocket1, (char*)&kp[0], kp_size, 0);
+		if (sendNumber == -1 || sendDsc == -1 || sendKp == -1) {
+			cout << "send features failed" << endl;
+			cout << "sendNumber: " << sendNumber << endl;
+			cout << "sendDsc: " << sendDsc << endl;
+			cout << "sendKp: " << sendKp << endl;
+
+		}
 	}
 	closesocket(clientSocket1);
 	//closesocket(clientSocket2);
@@ -440,18 +416,86 @@ void server::realTimeStitching() {
 		Mat warpR =m_warp_R;
 		Mat warpL = m_warp_L;
 		Mat warpB = m_warp_B;
-
 		Mat pano = st.AlphaBlendingGPU(imgC, warpR, 1., 0);
 		Mat pano2 = st.AlphaBlendingGPU(pano, warpL, 1., 1);
 		Mat pano3 = st.AlphaBlendingGPU(pano2, warpB, 1., 2);
+
 		cuda::GpuMat pano_GPU;
 		pano_GPU.upload(pano3);
-		namedWindow("pano", WINDOW_OPENGL);
-		imshow("pano", pano_GPU);
+		//namedWindow("pano", WINDOW_OPENGL);
+		//imshow("pano", pano_GPU);
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
 		std::cout << "Time difference = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
-		if (waitKey(10000/30) >= 0) break;
+		//if (waitKey(10000/30) >= 0) break;
 
+	}
+}
+
+void server::recv_obstacle(int port)
+{
+	SOCKET clientSocket = createSocket(port);
+	while (true) {
+		char* buf = new char[4];
+		int bytes = 0;
+		int bytes_size = recv(clientSocket, buf, 4, MSG_WAITALL);
+		int* pt = (int*)buf;
+		int rect_size = *pt;
+		vector<Rect> rct;
+		rct.resize(rect_size / sizeof(Rect));
+		if (( bytes = recv(clientSocket, reinterpret_cast<char*>(&rct[0]), rect_size, MSG_WAITALL)) == -1) cout << "kpts recv failed" << endl;
+
+		delete[] buf;
+		if (rct.size() == 0) {
+			cout << "Rct size is 0" << endl;
+			continue;
+		}
+		std::sort(rct.begin(), rct.end(),
+			[](Rect& x, Rect& y) {
+				if (x.area() < y.area())
+					return x.area() > y.area();
+			});
+		
+		switch (port) {
+			case 24000:
+				m_rect_R = rct;
+	
+
+			case 14000:
+				m_rect_L = rct;
+
+			case 44000:
+				m_rect_B = rct;
+
+			case 34000:
+				m_rect_C = rct;
+
+		}
+
+	}
+	closesocket(clientSocket);
+}
+
+void server::find_biggst_rct() {
+	while (true) {
+		if (m_rect_R.empty() || m_rect_L.empty() || m_rect_B.empty() || m_rect_C.empty()) continue;
+
+		int area = 0;
+		if (m_rect_R[0].area() > area) {
+			biggest_Rct = m_rect_R[0];
+			area = m_rect_R[0].area();
+		}
+		if (m_rect_L[0].area() > area) {
+			biggest_Rct = m_rect_L[0];
+			area = m_rect_L[0].area();
+		}
+		if (m_rect_B[0].area() > area) {
+			biggest_Rct = m_rect_B[0];
+			area = m_rect_B[0].area();
+		}
+		if (m_rect_C[0].area() > area) {
+			biggest_Rct = m_rect_C[0];
+			area = m_rect_C[0].area();
+		}
 	}
 }
