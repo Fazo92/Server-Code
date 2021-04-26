@@ -5,7 +5,10 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-#define PACK_SIZE 65500 //udp pack size; note that OSX limits < 8100 bytes
+#include <opencv2/imgproc.hpp>
+#define PACK_SIZE 65500
+//#define PACK_SIZE 10000
+
 #define ENCODE_QUALITY 80
 using namespace std;
 using namespace cv;
@@ -32,12 +35,17 @@ public:
 
 
 	void initUDP(int port, string clientIP);
+	void initUDPSend(int port, string clientIP);
+
+	void initMultiCastUDP(int port, string localIP, string groupIP);
+	void initMultiCastUDPrecv(int port, string localIP, string groupIP);
+
 	void initTCP(int port);
 
 	int getClientLength();
 	sockaddr_in getsockaddr_in();
 	void closeSock();
-	void rcv_img(Mat &img);
+	void rcv_img(Mat& img);
 	bool tcp = false;
 	void send_img(cv::Mat img);
 };
