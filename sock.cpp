@@ -1,7 +1,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "sock.h"
 
-void sock::initUDP(int port,string clientIP) {
+void sock::initUDP(int port, string clientIP) {
 	WSADATA data;
 
 	// To start WinSock, the required version must be passed to
@@ -18,9 +18,9 @@ void sock::initUDP(int port,string clientIP) {
 		cout << "Can't start Winsock! " << wsOk;
 		return;
 	}
-	SOCKET sockettmp= socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	SOCKET sockettmp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-	sockaddr_in serverHint_send,serverHint_recv;
+	sockaddr_in serverHint_send, serverHint_recv;
 	//serverHint.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
 	serverHint_send.sin_family = AF_INET; // Address format is IPv4
 	serverHint_send.sin_port = htons(port); // Convert from little to big endian
@@ -40,7 +40,7 @@ void sock::initUDP(int port,string clientIP) {
 	}
 	cout << bin << endl;
 	this->in = sockettmp;
-	this->server= serverHint_send;
+	this->server = serverHint_send;
 	this->serverLength = sizeof(server);
 }
 void sock::initTCP(int port)
@@ -104,7 +104,7 @@ sockaddr_in sock::getsockaddr_in() {
 
 }
 
-void sock::rcv_img(Mat &img) 
+void sock::rcv_img(Mat& img)
 {
 	while (true) {
 		int recvMsgSize; // Size of received message
@@ -118,7 +118,7 @@ void sock::rcv_img(Mat &img)
 
 			//Wait for client to send data
 			//for (int i = 0; i < sizeof(buf2); i += bytesDim)
-				if ((bytesDim = recv(in, buf2 , sizeof(buf2) , 0)) == -1) cout << "recv number failed" << endl;
+			if ((bytesDim = recv(in, buf2, sizeof(buf2), 0)) == -1) cout << "recv number failed" << endl;
 			int* pt = (int*)buf2;
 			imgSize = *pt;
 			char* buf = new char[imgSize];
@@ -134,7 +134,7 @@ void sock::rcv_img(Mat &img)
 
 		}
 		else {
-			
+
 			char buffer[65540]; // Buffer for echo string
 
 			int l = getClientLength();
@@ -184,7 +184,6 @@ void sock::send_img(cv::Mat img) {
 	compression_params.push_back(80);
 	sockaddr_in cliaddr;
 	memset(&cliaddr, 0, sizeof(cliaddr));
-
 	imencode(".jpg", img, imgVec, compression_params);
 	if (tcp == true) {
 		int vecSize = imgVec.size();
@@ -194,18 +193,177 @@ void sock::send_img(cv::Mat img) {
 	}
 	else
 	{
-		int total_pack = 1 + (imgVec.size() - 1) / PACK_SIZE;
-		int ibuf[1];
-		ibuf[0] = total_pack;
-		int s=sendto(in, (char*)&ibuf, sizeof(int), 0, (sockaddr*)&server, sizeof(server));
-		string st = "hello";
-		//int s = sendto(in, st.c_str(), sizeof(st), 0, (sockaddr*)&server, sizeof(server));
 
-		if (s == SOCKET_ERROR)
-		{
-			cout << "That didn't work! " << WSAGetLastError() << endl;
+		int total_pack = 1 + (imgVec.size() - 1) / PACK_SIZE;
+		if (total_pack == 1) {
+			#define PACK_SIZE 10000
+			total_pack = 1 + (imgVec.size() - 1) / PACK_SIZE;
+			int ibuf[1];
+			ibuf[0] = total_pack;
+			int s = sendto(in, (char*)&ibuf, sizeof(int), 0, (sockaddr*)&server, sizeof(server));
+			//int s = sendto(in, st.c_str(), sizeof(st), 0, (sockaddr*)&server, sizeof(server));
+			if (s == SOCKET_ERROR)
+			{
+				cout << "That didn't work! ibuf " << WSAGetLastError() << endl;
+			}
+			for (int i = 0; i < total_pack; i++) {
+				int s2 = sendto(in, (char*)&imgVec[i * PACK_SIZE], PACK_SIZE, 0, (sockaddr*)&server, sizeof(server));
+
+				if (s2 == SOCKET_ERROR)
+				{
+					cout << "That didn't work! " << WSAGetLastError() << endl;
+				}
+			}
 		}
-		for (int i = 0; i < total_pack; i++)
-			sendto(in, (char*)&imgVec[i * PACK_SIZE], PACK_SIZE, 0, (sockaddr*)&server, sizeof(server));
+		else {
+			int ibuf[1];
+			ibuf[0] = total_pack;
+			int s = sendto(in, (char*)&ibuf, sizeof(int), 0, (sockaddr*)&server, sizeof(server));
+			//int s = sendto(in, st.c_str(), sizeof(st), 0, (sockaddr*)&server, sizeof(server));
+			if (s == SOCKET_ERROR)
+			{
+				cout << "That didn't work! ibuf " << WSAGetLastError() << endl;
+			}
+			for (int i = 0; i < total_pack; i++) {
+				int s2 = sendto(in, (char*)&imgVec[i * PACK_SIZE], PACK_SIZE, 0, (sockaddr*)&server, sizeof(server));
+
+				if (s2 == SOCKET_ERROR)
+				{
+					cout << "That didn't work! " << WSAGetLastError() << endl;
+				}
+			}
+		}
+		
 	}
+}
+
+
+void sock::initMultiCastUDP(int port, string localIP, string groupIP)
+{
+	int sockfd;
+	struct in_addr local;
+	struct sockaddr_in group;
+
+	WSADATA WsaDat;
+	if (WSAStartup(MAKEWORD(2, 2), &WsaDat) != 0) {
+		cout << "WSA FAILED\n";
+	}
+
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		perror("error on sockfd \n");
+	}
+	else {
+		printf("send socket created \n");
+	}
+
+	memset((char*)&group, 0, sizeof(group));
+	group.sin_family = AF_INET;
+	group.sin_addr.s_addr = inet_addr(groupIP.c_str());
+	group.sin_port = htons(port);
+
+	local.s_addr = inet_addr(localIP.c_str());
+	if (setsockopt(sockfd, IPPROTO_IP, IP_MULTICAST_IF, (char*)&local, sizeof(local)) == -1) {
+		cout << "can't create multicast Socket" << endl;
+	}
+	else {
+		printf("local interface set");
+	}
+
+	this->in = sockfd;
+	this->server = group;
+	this->serverLength = sizeof(group);
+}
+
+
+void sock::initMultiCastUDPrecv(int port, string localIP, string groupIP)
+{
+
+	//CODE because I'm creating on a window system
+	WSADATA WsaDat;
+	if (WSAStartup(MAKEWORD(2, 2), &WsaDat) != 0) {
+		cout << "WSA FAILED\n";
+	}
+	//CODE because I'm creating on a window system
+	//The rest	of	the code	would	suffice alone on Linux
+
+	int sockfd;
+	struct sockaddr_in local;
+	struct ip_mreq group;
+	char databuf[1024];
+	int datalen;
+	struct sockaddr_in src_addr;    /* Used to receive (addr,port) of sender */
+
+
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		perror("error creating socket \n");
+	}
+	else {
+		printf("socket created \n");
+	}
+
+	int reuse = 1;
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse,
+		sizeof(reuse)) == 1) {
+		perror("error on setsockopt \n");
+	}
+	else {
+		printf("sockopt'd successfully \n");
+	}
+
+	memset((char*)&local, 0, sizeof(local));
+	local.sin_family = AF_INET;
+	local.sin_port = htons(port);
+	local.sin_addr.s_addr = INADDR_ANY;
+
+	if (::bind(sockfd, (struct sockaddr*)&local, sizeof(local)) == -1) {
+		perror("error on binding \n");
+	}
+	else {
+		printf("bound \n");
+	}
+
+	group.imr_multiaddr.s_addr = inet_addr(groupIP.c_str());
+	group.imr_interface.s_addr = inet_addr(localIP.c_str());
+	if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+		(char*)&group, sizeof(group)) == -1) {
+		perror("adding group error \n");
+		closesocket(sockfd);
+		exit(1);
+	}
+	else {
+		printf("adding multicast group \n");
+	}
+	this->in = sockfd;
+}
+
+void sock::initUDPSend(int port, string clientIP) {
+
+	WSADATA data;
+
+	// To start WinSock, the required version must be passed to
+	// WSAStartup(). This server is going to use WinSock version
+	// 2 so I create a word that will store 2 and 2 in hex i.e.
+	// 0x0202
+	WORD version = MAKEWORD(2, 2);
+
+	// Start WinSock
+	int wsOk = WSAStartup(version, &data);
+	if (wsOk != 0)
+	{
+		// Not ok! Get out quickly
+		cout << "Can't start Winsock! " << wsOk;
+		return;
+	}
+	SOCKET sockettmp = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+	sockaddr_in serverHint_send, serverHint_recv;
+	serverHint_send.sin_addr.S_un.S_addr = ADDR_ANY; // Us any IP address available on the machine
+	serverHint_send.sin_family = AF_INET; // Address format is IPv4
+	serverHint_send.sin_port = htons(port); // Convert from little to big endian
+
+	inet_pton(AF_INET, clientIP.c_str(), &serverHint_send.sin_addr);
+
+	this->in = sockettmp;
+	this->server = serverHint_send;
+	this->serverLength = sizeof(server);
 }
